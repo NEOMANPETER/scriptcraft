@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScriptCraft — Screenwriting & Production Breakdown</title>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d0f14">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ScriptCraft">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root {
+      --ink: #0d0f14;
+      --panel: #161922;
+      --panel-2: #1d212c;
+      --paper: #ffffff;
+      --text-paper: #14161a;
+      --text-main: #e7e8ec;
+      --text-dim: #8b90a0;
+      --blue: #3b6bf6;
+      --blue-deep: #2c53d1;
+      --amber: #f0a83c;
+      --border: #272b37;
+      --good: #3ecf8e;
+      --warn: #f0a83c;
+      --bad: #ef5a5a;
+      --ui-font: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --script-font: 'Courier Prime', 'Courier New', Courier, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+
+    body {
+      background: var(--ink);
+      color: var(--text-main);
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    button:focus-visible, input:focus-visible, [tabindex]:focus-visible, .breakdown-item:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
+
+    header {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 1.1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      z-index: 10;
+    }
+
+    .brand { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+    .brand svg { flex-shrink: 0; display: block; }
+    .brand-text { display: flex; flex-direction: column; min-width: 0; }
+    .brand-name {
+      font-family: var(--ui-font);
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+      color: #fff;
+      line-height: 1.1;
+    }
+    .brand-name .accent { color: var(--blue); }
+
+    .title-input {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      outline: none;
+      min-width: 0;
+      max-width: 220px;
+    }
+    .title-input:hover, .title-input:focus { border-color: var(--border); background: rgba(255,255,255,0.04); color: var(--text-main); }
+
+    .status {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+    .status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); transition: background 0.2s ease; }
+    .status.saving .dot { background: var(--warn); }
+    .status.error .dot { background: var(--bad); }
+
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    button {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 0.45rem 0.75rem;
+      border-radius: 7px;
+      font-family: var(--ui-font);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    button:hover { background: #262b38; border-color: #34394a; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    button.primary:hover { background: var(--blue-deep); }
+    button.danger:hover { background: #3a1f1f; border-color: #5a2a2a; }
+
+    .app-body { flex: 1; display: flex; overflow: hidden; }
+
+    .breakdown-sidebar {
+      width: 300px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 1.1rem;
+      gap: 1.4rem;
+    }
+
+    .sidebar-section h3 {
+      font-family: var(--ui-font);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: var(--text-dim);
+      margin-bottom: 0.55rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-section h3 .n { color: var(--blue); font-weight: 700; }
+
+    .breakdown-list { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
+    .breakdown-item {
+      font-size: 0.82rem;
+      background: var(--panel-2);
+      padding: 0.45rem 0.65rem;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .breakdown-item:hover { border-color: var(--blue); }
+    .breakdown-item.static { cursor: default; color: var(--text-dim); }
+    .breakdown-item.static:hover { border-color: transparent; }
+    .breakdown-count { color: var(--blue); font-weight: 600; flex-shrink: 0; }
+    .breakdown-item span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .stats-line { font-size: 0.75rem; color: var(--text-dim); }
+
+    main {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      justify-content: center;
+      padding: 2.2rem 1rem;
+      background:
+        radial-gradient(ellipse at top, rgba(59,107,246,0.06), transparent 60%),
+        var(--ink);
+    }
+
+    .page {
+      background: var(--paper);
+      color: var(--text-paper);
+      width: 100%;
+      max-width: 800px;
+      min-height: 1000px;
+      padding: 1in 1in 1in 1.5in;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+      border-radius: 3px;
+      font-family: var(--script-font);
+      font-size: 12pt;
+      line-height: 1.2;
+      outline: none;
+    }
+
+    .element { margin-bottom: 1em; min-height: 1.2em; outline: none; white-space: pre-wrap; word-break: break-word; border-radius: 3px; transition: background-color 0.3s ease; }
+    .scene-heading { text-transform: uppercase; font-weight: bold; margin-top: 1.5em; margin-bottom: 1em; }
+    .action { margin-bottom: 1em; }
+    .character { text-transform: uppercase; margin-left: 35%; margin-top: 1em; margin-bottom: 0em; width: 65%; }
+    .parenthetical { margin-left: 25%; width: 50%; margin-bottom: 0em; }
+    .dialogue { margin-left: 20%; width: 60%; margin-bottom: 1em; }
+    .transition { text-transform: uppercase; margin-left: 60%; width: 40%; margin-top: 1em; margin-bottom: 1em; }
+
+    .formatting-toolbar {
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding: 0.55rem;
+      display: flex;
+      gap: 0.4rem;
+      overflow-x: auto;
+      justify-content: center;
+      align-items: center;
+    }
+    .formatting-toolbar button.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .toolbar-hint { font-size: 0.68rem; color: var(--text-dim); margin-left: 0.5rem; white-space: nowrap; }
+
+    @media (max-width: 850px) {
+      .breakdown-sidebar { display: none; }
+      .page { padding: 1rem; font-size: 10pt; }
+      .character { margin-left: 20%; width: 80%; }
+      .parenthetical { margin-left: 15%; width: 70%; }
+      .dialogue { margin-left: 10%; width: 80%; }
+      .toolbar-hint { display: none; }
+      .title-input { max-width: 120px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#232a3d"/>
+            <stop offset="1" stop-color="#0d0f14"/>
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" rx="22" fill="url(#bgGrad)"/>
+        <g>
+          <rect x="20" y="16" width="7" height="11" fill="#f0a83c"/>
+          <rect x="30" y="16" width="7" height="11" fill="#e7e8ec"/>
+          <rect x="40" y="16" width="7" height="11" fill="#f0a83c"/>
+          <rect x="50" y="16" width="7" height="11" fill="#e7e8ec"/>
+          <rect x="60" y="16" width="7" height="11" fill="#f0a83c"/>
+          <rect x="70" y="16" width="7" height="11" fill="#e7e8ec"/>
+        </g>
+        <path d="M30 32 H62 L74 44 V80 A3 3 0 0 1 71 83 H30 A3 3 0 0 1 27 80 V35 A3 3 0 0 1 30 32 Z" fill="#ffffff"/>
+        <path d="M62 32 L74 44 H65 A3 3 0 0 1 62 41 Z" fill="#c9cedb"/>
+        <rect x="34" y="50" width="30" height="3.4" rx="1.7" fill="#1d212c"/>
+        <rect x="34" y="58" width="30" height="3.4" rx="1.7" fill="#8b90a0"/>
+        <rect x="42" y="66" width="16" height="3.4" rx="1.7" fill="#3b6bf6"/>
+        <rect x="38" y="74" width="24" height="3.4" rx="1.7" fill="#8b90a0"/>
+      </svg>
+      <div class="brand-text">
+        <div class="brand-name">Script<span class="accent">Craft</span></div>
+        <input type="text" id="scriptTitle" class="title-input" value="THE MESSAGE BETWEEN US" maxlength="120">
+      </div>
+    </div>
+    <div class="status" id="saveStatus"><span class="dot"></span><span id="saveStatusText">Loading…</span></div>
+    <div class="actions">
+      <button onclick="runBreakdown()">Refresh Breakdown</button>
+      <button onclick="exportFountain()">Export .fountain</button>
+      <button class="primary" id="pdfBtn" onclick="exportPDF()">Export PDF</button>
+      <button class="danger" onclick="clearScript()">New / Clear</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <aside class="breakdown-sidebar">
+      <div class="sidebar-section">
+        <h3>Scenes Index (<span class="n" id="sceneCount">0</span>)</h3>
+        <ul id="locationList" class="breakdown-list"></ul>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Characters / Cast (<span class="n" id="charCount">0</span>)</h3>
+        <ul id="characterList" class="breakdown-list"></ul>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Props & Production Tags</h3>
+        <p style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 0.5rem;">Use [prop: item] in action lines to track props.</p>
+        <ul id="propList" class="breakdown-list"></ul>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="stats-line" id="statsLine">0 words · ~0 pages</div>
+      </div>
+    </aside>
+
+    <main>
+      <div id="editor" class="page" contenteditable="true" spellcheck="true">
+        <div class="element scene-heading" data-type="scene-heading">INT. EDITING SUITE - DAY</div>
+        <div class="element action" data-type="action">A studio editor sits in front of dual monitors, holding a [prop: black espresso cup].</div>
+        <div class="element character" data-type="character">EDITOR</div>
+        <div class="element dialogue" data-type="dialogue">This script editor formats scene elements automatically and breaks down every location and character in real time.</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="formatting-toolbar">
+    <button onclick="setElementType('scene-heading')" id="btn-scene-heading">Scene Heading</button>
+    <button onclick="setElementType('action')" id="btn-action">Action</button>
+    <button onclick="setElementType('character')" id="btn-character">Character</button>
+    <button onclick="setElementType('parenthetical')" id="btn-parenthetical">Parenthetical</button>
+    <button onclick="setElementType('dialogue')" id="btn-dialogue">Dialogue</button>
+    <button onclick="setElementType('transition')" id="btn-transition">Transition</button>
+    <span class="toolbar-hint">Tab cycles element type · Enter moves to the natural next element</span>
+  </div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const scriptTitle = document.getElementById('scriptTitle');
+    const STORAGE_KEY = 'screenplay:main';
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ---------- Storage layer ----------
+    // window.storage only exists inside Claude's artifact sandbox. If this file is
+    // deployed as a standalone site (GitHub Pages, Netlify, etc.), window.storage
+    // won't be there — but real browsers support localStorage fine outside that
+    // sandbox, so this falls back to it automatically. Same app, either environment.
+    const hasClaudeStorage = typeof window.storage !== 'undefined';
+
+    async function storageGet(key) {
+      if (hasClaudeStorage) {
+        try { return await window.storage.get(key, false); } catch (e) { return null; }
+      }
+      const v = localStorage.getItem(key);
+      return v ? { value: v } : null;
+    }
+    async function storageSet(key, value) {
+      if (hasClaudeStorage) {
+        try { return await window.storage.set(key, value, false); } catch (e) { return null; }
+      }
+      try { localStorage.setItem(key, value); return { value }; } catch (e) { return null; }
+    }
+    async function storageDelete(key) {
+      if (hasClaudeStorage) {
+        try { return await window.storage.delete(key, false); } catch (e) { return null; }
+      }
+      localStorage.removeItem(key);
+      return { deleted: true };
+    }
+
+    let saveTimer = null;
+    let dirty = false;
+    let saving = false;
+
+    function setStatus(state, text) {
+      const el = document.getElementById('saveStatus');
+      el.className = 'status ' + state;
+      document.getElementById('saveStatusText').textContent = text;
+    }
+
+    async function loadScript() {
+      setStatus('saving', 'Loading…');
+      const result = await storageGet(STORAGE_KEY);
+      if (result && result.value) {
+        try {
+          const data = JSON.parse(result.value);
+          if (typeof data.content === 'string') editor.innerHTML = data.content;
+          if (typeof data.title === 'string') scriptTitle.value = data.title;
+        } catch (e) { /* ignore corrupt data, start fresh */ }
+      }
+      setStatus('', 'Saved');
+      runBreakdown();
+      updateStats();
+    }
+
+    async function saveScript() {
+      if (saving) return;
+      saving = true;
+      setStatus('saving', 'Saving…');
+      const payload = JSON.stringify({ content: editor.innerHTML, title: scriptTitle.value });
+      const result = await storageSet(STORAGE_KEY, payload);
+      saving = false;
+      if (result) {
+        dirty = false;
+        setStatus('', 'Saved');
+      } else {
+        setStatus('error', 'Save failed — will retry');
+        scheduleSave();
+      }
+    }
+
+    function scheduleSave() {
+      dirty = true;
+      setStatus('saving', 'Unsaved changes');
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveScript, 1200);
+    }
+
+    async function clearScript() {
+      if (!confirm('Start a new script? This clears the current title and pages. This cannot be undone.')) return;
+      editor.innerHTML = '<div class="element scene-heading" data-type="scene-heading">INT. LOCATION - DAY</div><div class="element action" data-type="action">&nbsp;</div>';
+      scriptTitle.value = 'UNTITLED SCREENPLAY';
+      await storageDelete(STORAGE_KEY);
+      runBreakdown();
+      updateStats();
+      setStatus('', 'Saved');
+    }
+
+    setInterval(() => { if (dirty) saveScript(); }, 15000);
+
+    window.addEventListener('DOMContentLoaded', loadScript);
+    editor.addEventListener('input', () => { scheduleSave(); runBreakdown(); updateStats(); });
+    scriptTitle.addEventListener('input', scheduleSave);
+
+    function getCurrentElement() {
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return null;
+      let node = selection.anchorNode;
+      while (node && node !== editor) {
+        if (node.classList && node.classList.contains('element')) return node;
+        node = node.parentNode;
+      }
+      return null;
+    }
+
+    function setElementType(type) {
+      const el = getCurrentElement();
+      if (!el) return;
+      el.className = 'element ' + type;
+      el.setAttribute('data-type', type);
+      updateToolbarActiveState();
+      runBreakdown();
+      scheduleSave();
+    }
+
+    function updateToolbarActiveState() {
+      const el = getCurrentElement();
+      const buttons = document.querySelectorAll('.formatting-toolbar button[id^="btn-"]');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      if (el) {
+        const type = el.getAttribute('data-type') || 'action';
+        const activeBtn = document.getElementById('btn-' + type);
+        if (activeBtn) activeBtn.classList.add('active');
+      }
+    }
+
+    editor.addEventListener('keydown', (e) => {
+      const currentEl = getCurrentElement();
+      if (!currentEl) return;
+      const currentType = currentEl.getAttribute('data-type') || 'action';
+
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const cycle = ['scene-heading', 'action', 'character', 'parenthetical', 'dialogue', 'transition'];
+        let idx = cycle.indexOf(currentType);
+        idx = e.shiftKey ? (idx - 1 + cycle.length) % cycle.length : (idx + 1) % cycle.length;
+        setElementType(cycle[idx]);
+        return;
+      }
+
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        let nextType = 'action';
+        if (currentType === 'scene-heading') nextType = 'action';
+        else if (currentType === 'character') nextType = 'dialogue';
+        else if (currentType === 'parenthetical') nextType = 'dialogue';
+        else if (currentType === 'dialogue') nextType = 'action';
+        else if (currentType === 'transition') nextType = 'scene-heading';
+
+        const newEl = document.createElement('div');
+        newEl.className = 'element ' + nextType;
+        newEl.setAttribute('data-type', nextType);
+        newEl.innerHTML = '<br>';
+
+        if (currentEl.nextSibling) editor.insertBefore(newEl, currentEl.nextSibling);
+        else editor.appendChild(newEl);
+
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.setStart(newEl, 0);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        updateToolbarActiveState();
+        runBreakdown();
+        scheduleSave();
+      }
+    });
+
+    document.addEventListener('selectionchange', updateToolbarActiveState);
+
+    function jumpToElement(idx) {
+      const el = editor.querySelector('[data-idx="' + idx + '"]');
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.backgroundColor = 'rgba(59, 107, 246, 0.18)';
+      setTimeout(() => { el.style.backgroundColor = ''; }, 1200);
+    }
+
+    function runBreakdown() {
+      const elements = editor.querySelectorAll('.element');
+      const characters = {};
+      const locations = [];
+      const props = [];
+
+      elements.forEach((el, idx) => {
+        el.setAttribute('data-idx', idx);
+        const type = el.getAttribute('data-type');
+        const text = el.innerText.trim();
+
+        if (type === 'scene-heading' && text.length > 0) {
+          locations.push({ text, idx });
+        } else if (type === 'character' && text.length > 0) {
+          const cleanChar = text.replace(/\(.*\)/, '').trim();
+          if (!characters[cleanChar]) characters[cleanChar] = { count: 0, firstIdx: idx };
+          characters[cleanChar].count += 1;
+        }
+
+        const propMatches = text.match(/\[prop:\s*([^\]]+)\]/gi);
+        if (propMatches) {
+          propMatches.forEach(m => {
+            const item = m.replace(/\[prop:\s*/i, '').replace(']', '').trim();
+            if (item && !props.some(p => p.text.toLowerCase() === item.toLowerCase())) {
+              props.push({ text: item, idx });
+            }
+          });
+        }
+      });
+
+      document.getElementById('sceneCount').innerText = locations.length;
+      document.getElementById('locationList').innerHTML = locations.map((loc, i) =>
+        `<li class="breakdown-item" onclick="jumpToElement(${loc.idx})">` +
+          `<span>${i + 1}. ${escapeHtml(loc.text)}</span>` +
+        `</li>`
+      ).join('') || '<li class="breakdown-item static">No scenes yet</li>';
+
+      const sortedChars = Object.entries(characters).sort((a, b) => b[1].count - a[1].count);
+      document.getElementById('charCount').innerText = sortedChars.length;
+      document.getElementById('characterList').innerHTML = sortedChars.map(([char, info]) =>
+        `<li class="breakdown-item" onclick="jumpToElement(${info.firstIdx})">` +
+          `<span>${escapeHtml(char)}</span><span class="breakdown-count">${info.count} lines</span>` +
+        `</li>`
+      ).join('') || '<li class="breakdown-item static">No characters yet</li>';
+
+      document.getElementById('propList').innerHTML = props.map(prop =>
+        `<li class="breakdown-item" onclick="jumpToElement(${prop.idx})"><span>📦 ${escapeHtml(prop.text)}</span></li>`
+      ).join('') || '<li class="breakdown-item static">No props tagged yet</li>';
+    }
+
+    function updateStats() {
+      const text = editor.innerText || '';
+      const words = (text.match(/\S+/g) || []).length;
+      const pages = Math.max(1, Math.round(words / 215 * 10) / 10);
+      document.getElementById('statsLine').textContent = `${words} words · ~${pages} pages`;
+    }
+
+    async function exportPDF() {
+      const btn = document.getElementById('pdfBtn');
+      btn.disabled = true;
+      const originalLabel = btn.textContent;
+      btn.textContent = 'Exporting…';
+      try {
+        const { jsPDF } = window.jspdf;
+        const canvas = await html2canvas(editor, { scale: 2, backgroundColor: '#ffffff' });
+
+        const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
+        const pageWidthPt = pdf.internal.pageSize.getWidth();
+        const pageHeightPt = pdf.internal.pageSize.getHeight();
+        const ratio = pageWidthPt / canvas.width;
+        const sliceHeightPx = pageHeightPt / ratio;
+
+        let renderedPx = 0;
+        let pageNum = 0;
+        while (renderedPx < canvas.height) {
+          const thisSlicePx = Math.min(sliceHeightPx, canvas.height - renderedPx);
+
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = thisSlicePx;
+          const ctx = pageCanvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          ctx.drawImage(canvas, 0, renderedPx, canvas.width, thisSlicePx, 0, 0, canvas.width, thisSlicePx);
+
+          const imgData = pageCanvas.toDataURL('image/png');
+          if (pageNum > 0) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, 0, pageWidthPt, thisSlicePx * ratio);
+
+          renderedPx += thisSlicePx;
+          pageNum++;
+        }
+
+        pdf.save((scriptTitle.value || 'screenplay') + '.pdf');
+      } catch (err) {
+        alert('PDF export failed. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+      }
+    }
+
+    function exportFountain() {
+      const elements = editor.querySelectorAll('.element');
+      let text = 'Title: ' + (scriptTitle.value || 'Untitled Screenplay') + '\n\n';
+      elements.forEach(el => {
+        const type = el.getAttribute('data-type');
+        const content = el.innerText.trim();
+
+        if (type === 'scene-heading') text += '\n' + content.toUpperCase() + '\n\n';
+        else if (type === 'character') text += '\n' + content.toUpperCase() + '\n';
+        else if (type === 'parenthetical') {
+          const stripped = content.replace(/^\(/, '').replace(/\)$/, '');
+          text += '(' + stripped + ')\n';
+        }
+        else if (type === 'dialogue') text += content + '\n\n';
+        else if (type === 'transition') text += '> ' + content.toUpperCase() + '\n\n';
+        else text += content + '\n\n';
+      });
+
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (scriptTitle.value || 'screenplay') + '.fountain';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // ---------- PWA install support ----------
+    // Registering this makes Chrome/Edge offer "Install app" and lets iOS's
+    // "Add to Home Screen" launch full-screen instead of as a browser tab.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {
+          // Fine to ignore — the app still works fully without offline caching,
+          // e.g. when opened directly as a local file instead of a real server.
+        });
+      });
+    }
+  </script>
+</body>
+</html>
