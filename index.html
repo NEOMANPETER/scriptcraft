@@ -1,307 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ScriptCraft — Screenwriting & Production Breakdown</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScriptCraft — Screenwriting & Production Suite</title>
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d0f14">
-  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-180.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="ScriptCraft">
-  <meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d0f14">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ScriptCraft">
+<meta name="mobile-web-app-capable" content="yes">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-  <style>
-    :root {
-      --ink: #0d0f14;
-      --panel: #161922;
-      --panel-2: #1d212c;
-      --paper: #ffffff;
-      --text-paper: #14161a;
-      --text-main: #e7e8ec;
-      --text-dim: #8b90a0;
-      --blue: #3b6bf6;
-      --blue-deep: #2c53d1;
-      --amber: #f0a83c;
-      --border: #272b37;
-      --good: #3ecf8e;
-      --warn: #f0a83c;
-      --bad: #ef5a5a;
-      --ui-font: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --script-font: 'Courier Prime', 'Courier New', Courier, monospace;
-    }
+<style>
+  :root {
+    --ink: #0d0f14; --panel: #161922; --panel-2: #1d212c;
+    --paper: #ffffff; --text-paper: #14161a;
+    --text-main: #e7e8ec; --text-dim: #8b90a0;
+    --blue: #3b6bf6; --blue-deep: #2c53d1; --amber: #f0a83c;
+    --border: #272b37; --good: #3ecf8e; --warn: #f0a83c; --bad: #ef5a5a;
+    --ui-font: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --script-font: 'Courier Prime', 'Courier New', Courier, monospace;
+  }
+  body.light {
+    --ink: #eef0f4; --panel: #ffffff; --panel-2: #f3f4f7;
+    --text-main: #14161a; --text-dim: #5b6070; --border: #dde1e8;
+  }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after{ transition:none !important; animation:none !important; } }
 
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { transition: none !important; animation: none !important; }
-    }
+  body {
+    background: var(--ink); color: var(--text-main); font-family: var(--ui-font);
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible, .breakdown-item:focus-visible {
+    outline: 2px solid var(--blue); outline-offset: 2px;
+  }
 
-    body {
-      background: var(--ink);
-      color: var(--text-main);
-      font-family: var(--ui-font);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
+  header {
+    background: var(--panel-2); border-bottom: 1px solid var(--border);
+    padding: 0.65rem 1rem; display: flex; justify-content: space-between; align-items: center;
+    gap: 0.75rem; flex-wrap: wrap; z-index: 10;
+  }
+  .brand { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+  .brand img { width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; display: block; }
+  .brand-text { display: flex; flex-direction: column; min-width: 0; }
+  .brand-name { font-weight: 700; font-size: 1.02rem; letter-spacing: -0.01em; color: var(--text-main); line-height: 1.1; }
+  .brand-name .accent { color: var(--amber); }
+  .title-input {
+    background: transparent; border: 1px solid transparent; color: var(--text-dim);
+    font-family: var(--ui-font); font-size: 0.76rem; font-weight: 500; padding: 0.15rem 0.4rem;
+    border-radius: 4px; outline: none; min-width: 0; max-width: 200px;
+  }
+  .title-input:hover, .title-input:focus { border-color: var(--border); background: rgba(120,120,140,0.08); color: var(--text-main); }
 
-    button:focus-visible, input:focus-visible, [tabindex]:focus-visible, .breakdown-item:focus-visible {
-      outline: 2px solid var(--blue);
-      outline-offset: 2px;
-    }
+  .status { font-size: 0.7rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+  .status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); }
+  .status.saving .dot { background: var(--warn); }
+  .status.error .dot { background: var(--bad); }
 
-    header {
-      background: linear-gradient(180deg, var(--panel-2), var(--panel));
-      border-bottom: 1px solid var(--border);
-      padding: 0.7rem 1.1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      z-index: 10;
-    }
+  .actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+  button {
+    background: var(--panel); border: 1px solid var(--border); color: var(--text-main);
+    padding: 0.42rem 0.7rem; border-radius: 7px; font-family: var(--ui-font); font-size: 0.78rem;
+    font-weight: 500; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  button:hover { background: var(--panel-2); border-color: var(--blue); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  button.primary:hover { background: var(--blue-deep); }
+  button.danger:hover { background: #3a1f1f; border-color: #ef5a5a; }
+  button.ghost.active, button.tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 
-    .brand { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
-    .brand svg { flex-shrink: 0; display: block; }
-    .brand-text { display: flex; flex-direction: column; min-width: 0; }
-    .brand-name {
-      font-family: var(--ui-font);
-      font-weight: 700;
-      font-size: 1.05rem;
-      letter-spacing: -0.01em;
-      color: #fff;
-      line-height: 1.1;
-    }
-    .brand-name .accent { color: var(--blue); }
+  nav.tabs { display: flex; gap: 0.4rem; padding: 0.5rem 1rem; background: var(--panel); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  nav.tabs button.tab { white-space: nowrap; }
 
-    .title-input {
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-dim);
-      font-family: var(--ui-font);
-      font-size: 0.78rem;
-      font-weight: 500;
-      padding: 0.15rem 0.4rem;
-      border-radius: 4px;
-      outline: none;
-      min-width: 0;
-      max-width: 220px;
-    }
-    .title-input:hover, .title-input:focus { border-color: var(--border); background: rgba(255,255,255,0.04); color: var(--text-main); }
+  .app-body { flex: 1; display: flex; overflow: hidden; }
+  .tab-panel { display: none; flex: 1; overflow-y: auto; }
+  .tab-panel.active { display: flex; }
 
-    .status {
-      font-size: 0.72rem;
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      white-space: nowrap;
-    }
-    .status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); transition: background 0.2s ease; }
-    .status.saving .dot { background: var(--warn); }
-    .status.error .dot { background: var(--bad); }
+  /* ---------- Write tab ---------- */
+  .breakdown-sidebar {
+    width: 290px; background: var(--panel); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow-y: auto; padding: 1rem; gap: 1.3rem;
+  }
+  .sidebar-section h3 { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em; color: var(--text-dim);
+    margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+  .sidebar-section h3 .n { color: var(--blue); font-weight: 700; }
+  .breakdown-list { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
+  .breakdown-item { font-size: 0.8rem; background: var(--panel-2); padding: 0.42rem 0.6rem; border-radius: 6px;
+    display: flex; justify-content: space-between; gap: 0.5rem; cursor: pointer; border: 1px solid transparent; }
+  .breakdown-item:hover { border-color: var(--blue); }
+  .breakdown-item.static { cursor: default; color: var(--text-dim); }
+  .breakdown-item.static:hover { border-color: transparent; }
+  .breakdown-count { color: var(--blue); font-weight: 600; flex-shrink: 0; }
+  .breakdown-item span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stats-line { font-size: 0.72rem; color: var(--text-dim); }
 
-    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  main.editor-main { flex: 1; overflow-y: auto; display: flex; justify-content: center; padding: 2rem 1rem;
+    background: radial-gradient(ellipse at top, rgba(59,107,246,0.06), transparent 60%), var(--ink); }
+  .page { background: var(--paper); color: var(--text-paper); width: 100%; max-width: 800px; min-height: 1000px;
+    padding: 1in 1in 1in 1.5in; box-shadow: 0 20px 50px rgba(0,0,0,0.4); border-radius: 3px;
+    font-family: var(--script-font); font-size: 12pt; line-height: 1.2; outline: none; }
+  .element { margin-bottom: 1em; min-height: 1.2em; outline: none; white-space: pre-wrap; word-break: break-word;
+    border-radius: 3px; transition: background-color 0.3s ease; }
+  .scene-heading { text-transform: uppercase; font-weight: bold; margin-top: 1.5em; margin-bottom: 1em; }
+  .action { margin-bottom: 1em; }
+  .character { text-transform: uppercase; margin-left: 35%; margin-top: 1em; margin-bottom: 0; width: 65%; }
+  .parenthetical { margin-left: 25%; width: 50%; margin-bottom: 0; }
+  .dialogue { margin-left: 20%; width: 60%; margin-bottom: 1em; }
+  .transition { text-transform: uppercase; margin-left: 60%; width: 40%; margin-top: 1em; margin-bottom: 1em; }
 
-    button {
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      padding: 0.45rem 0.75rem;
-      border-radius: 7px;
-      font-family: var(--ui-font);
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease;
-    }
-    button:hover { background: #262b38; border-color: #34394a; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
-    button.primary:hover { background: var(--blue-deep); }
-    button.danger:hover { background: #3a1f1f; border-color: #5a2a2a; }
+  .formatting-toolbar { background: var(--panel); border-top: 1px solid var(--border); padding: 0.5rem;
+    display: flex; gap: 0.4rem; overflow-x: auto; justify-content: center; align-items: center; }
+  .toolbar-hint { font-size: 0.66rem; color: var(--text-dim); margin-left: 0.5rem; white-space: nowrap; }
 
-    .app-body { flex: 1; display: flex; overflow: hidden; }
+  /* ---------- Generic panel layout (Schedule / Storyboard / Characters / Props) ---------- */
+  .panel-wrap { flex: 1; overflow-y: auto; padding: 1.6rem; }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.6rem; }
+  .panel-header h2 { font-size: 1rem; font-weight: 700; }
+  .panel-help { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 1.2rem; max-width: 640px; }
+  .empty-hint { color: var(--text-dim); font-size: 0.85rem; padding: 1.5rem; text-align: center; background: var(--panel);
+    border: 1px dashed var(--border); border-radius: 10px; }
 
-    .breakdown-sidebar {
-      width: 300px;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 1.1rem;
-      gap: 1.4rem;
-    }
+  table.sched-table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 10px; overflow: hidden; }
+  table.sched-table th, table.sched-table td { padding: 0.55rem 0.7rem; text-align: left; font-size: 0.82rem; border-bottom: 1px solid var(--border); }
+  table.sched-table th { color: var(--text-dim); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  table.sched-table input[type="number"], table.sched-table select {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text-main); border-radius: 5px; padding: 0.3rem 0.4rem; font-family: var(--ui-font); font-size: 0.8rem; width: 100%;
+  }
+  .shot-badge { font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 20px; background: rgba(62,207,142,0.15); color: var(--good); }
+  .shot-badge.pending { background: rgba(240,168,60,0.15); color: var(--warn); }
 
-    .sidebar-section h3 {
-      font-family: var(--ui-font);
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-      color: var(--text-dim);
-      margin-bottom: 0.55rem;
-      padding-bottom: 0.4rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .sidebar-section h3 .n { color: var(--blue); font-weight: 700; }
+  .day-groups { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; }
+  .day-group { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 1rem; }
+  .day-group h4 { font-size: 0.78rem; color: var(--blue); margin-bottom: 0.4rem; }
+  .day-group ul { list-style: none; font-size: 0.8rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 0.2rem; }
 
-    .breakdown-list { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
-    .breakdown-item {
-      font-size: 0.82rem;
-      background: var(--panel-2);
-      padding: 0.45rem 0.65rem;
-      border-radius: 6px;
-      display: flex;
-      justify-content: space-between;
-      gap: 0.5rem;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: border-color 0.15s ease, background 0.15s ease;
-    }
-    .breakdown-item:hover { border-color: var(--blue); }
-    .breakdown-item.static { cursor: default; color: var(--text-dim); }
-    .breakdown-item.static:hover { border-color: transparent; }
-    .breakdown-count { color: var(--blue); font-weight: 600; flex-shrink: 0; }
-    .breakdown-item span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .storyboard-scene { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1.2rem; }
+  .storyboard-scene h3 { font-size: 0.85rem; margin-bottom: 0.8rem; cursor: pointer; }
+  .panel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.8rem; }
+  .story-panel { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .story-panel img, .story-panel .placeholder { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 6px; background: var(--ink); }
+  .story-panel .placeholder { display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 0.72rem; text-align: center; padding: 0.5rem; }
+  .story-panel textarea { width: 100%; min-height: 50px; background: var(--panel); border: 1px solid var(--border); color: var(--text-main);
+    border-radius: 6px; padding: 0.4rem; font-family: var(--ui-font); font-size: 0.76rem; resize: vertical; }
+  .story-panel .panel-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .story-panel .panel-actions button { font-size: 0.68rem; padding: 0.32rem 0.5rem; flex: 1; }
+  .add-panel-btn { align-self: flex-start; margin-top: 0.6rem; }
 
-    .stats-line { font-size: 0.75rem; color: var(--text-dim); }
+  .char-card, .prop-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 0.9rem; }
+  .char-card .row, .prop-card .row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .char-card .name, .prop-card .name { font-weight: 700; font-size: 0.9rem; flex: 1 1 100%; margin-bottom: 0.3rem; }
+  .char-card input, .char-card select, .char-card textarea,
+  .prop-card input, .prop-card select, .prop-card textarea {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px;
+    padding: 0.4rem 0.5rem; font-family: var(--ui-font); font-size: 0.8rem;
+  }
+  .char-card textarea { width: 100%; min-height: 45px; resize: vertical; }
+  .field-label { font-size: 0.66rem; color: var(--text-dim); display: block; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .field-group { flex: 1; min-width: 130px; }
 
-    main {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      justify-content: center;
-      padding: 2.2rem 1rem;
-      background:
-        radial-gradient(ellipse at top, rgba(59,107,246,0.06), transparent 60%),
-        var(--ink);
-    }
+  .prop-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+  .prop-col h3 { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .prop-scenes { font-size: 0.7rem; color: var(--text-dim); margin-top: 0.3rem; }
+  .manual-add-row { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+  .manual-add-row input { flex: 1; background: var(--panel-2); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; padding: 0.4rem 0.5rem; font-family: var(--ui-font); font-size: 0.8rem; }
 
-    .page {
-      background: var(--paper);
-      color: var(--text-paper);
-      width: 100%;
-      max-width: 800px;
-      min-height: 1000px;
-      padding: 1in 1in 1in 1.5in;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.55);
-      border-radius: 3px;
-      font-family: var(--script-font);
-      font-size: 12pt;
-      line-height: 1.2;
-      outline: none;
-    }
-
-    .element { margin-bottom: 1em; min-height: 1.2em; outline: none; white-space: pre-wrap; word-break: break-word; border-radius: 3px; transition: background-color 0.3s ease; }
-    .scene-heading { text-transform: uppercase; font-weight: bold; margin-top: 1.5em; margin-bottom: 1em; }
-    .action { margin-bottom: 1em; }
-    .character { text-transform: uppercase; margin-left: 35%; margin-top: 1em; margin-bottom: 0em; width: 65%; }
-    .parenthetical { margin-left: 25%; width: 50%; margin-bottom: 0em; }
-    .dialogue { margin-left: 20%; width: 60%; margin-bottom: 1em; }
-    .transition { text-transform: uppercase; margin-left: 60%; width: 40%; margin-top: 1em; margin-bottom: 1em; }
-
-    .formatting-toolbar {
-      background: var(--panel);
-      border-top: 1px solid var(--border);
-      padding: 0.55rem;
-      display: flex;
-      gap: 0.4rem;
-      overflow-x: auto;
-      justify-content: center;
-      align-items: center;
-    }
-    .formatting-toolbar button.active { background: var(--blue); color: #fff; border-color: var(--blue); }
-    .toolbar-hint { font-size: 0.68rem; color: var(--text-dim); margin-left: 0.5rem; white-space: nowrap; }
-
-    @media (max-width: 850px) {
-      .breakdown-sidebar { display: none; }
-      .page { padding: 1rem; font-size: 10pt; }
-      .character { margin-left: 20%; width: 80%; }
-      .parenthetical { margin-left: 15%; width: 70%; }
-      .dialogue { margin-left: 10%; width: 80%; }
-      .toolbar-hint { display: none; }
-      .title-input { max-width: 120px; }
-    }
-  </style>
+  @media (max-width: 850px) {
+    .breakdown-sidebar { display: none; }
+    .page { padding: 1rem; font-size: 10pt; }
+    .character { margin-left: 20%; width: 80%; }
+    .parenthetical { margin-left: 15%; width: 70%; }
+    .dialogue { margin-left: 10%; width: 80%; }
+    .toolbar-hint { display: none; }
+    .title-input { max-width: 110px; }
+    .panel-wrap { padding: 1rem; }
+  }
+</style>
 </head>
 <body>
 
-  <header>
-    <div class="brand">
-      <svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true">
-        <defs>
-          <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#232a3d"/>
-            <stop offset="1" stop-color="#0d0f14"/>
-          </linearGradient>
-        </defs>
-        <rect width="100" height="100" rx="22" fill="url(#bgGrad)"/>
-        <g>
-          <rect x="20" y="16" width="7" height="11" fill="#f0a83c"/>
-          <rect x="30" y="16" width="7" height="11" fill="#e7e8ec"/>
-          <rect x="40" y="16" width="7" height="11" fill="#f0a83c"/>
-          <rect x="50" y="16" width="7" height="11" fill="#e7e8ec"/>
-          <rect x="60" y="16" width="7" height="11" fill="#f0a83c"/>
-          <rect x="70" y="16" width="7" height="11" fill="#e7e8ec"/>
-        </g>
-        <path d="M30 32 H62 L74 44 V80 A3 3 0 0 1 71 83 H30 A3 3 0 0 1 27 80 V35 A3 3 0 0 1 30 32 Z" fill="#ffffff"/>
-        <path d="M62 32 L74 44 H65 A3 3 0 0 1 62 41 Z" fill="#c9cedb"/>
-        <rect x="34" y="50" width="30" height="3.4" rx="1.7" fill="#1d212c"/>
-        <rect x="34" y="58" width="30" height="3.4" rx="1.7" fill="#8b90a0"/>
-        <rect x="42" y="66" width="16" height="3.4" rx="1.7" fill="#3b6bf6"/>
-        <rect x="38" y="74" width="24" height="3.4" rx="1.7" fill="#8b90a0"/>
-      </svg>
-      <div class="brand-text">
-        <div class="brand-name">Script<span class="accent">Craft</span></div>
-        <input type="text" id="scriptTitle" class="title-input" value="THE MESSAGE BETWEEN US" maxlength="120">
-      </div>
+<header>
+  <div class="brand">
+    <img src="icons/icon-192.png" alt="ScriptCraft logo">
+    <div class="brand-text">
+      <div class="brand-name">Script<span class="accent">Craft</span></div>
+      <input type="text" id="scriptTitle" class="title-input" value="THE MESSAGE BETWEEN US" maxlength="120">
     </div>
-    <div class="status" id="saveStatus"><span class="dot"></span><span id="saveStatusText">Loading…</span></div>
-    <div class="actions">
-      <button onclick="runBreakdown()">Refresh Breakdown</button>
-      <button onclick="exportFountain()">Export .fountain</button>
-      <button class="primary" id="pdfBtn" onclick="exportPDF()">Export PDF</button>
-      <button class="danger" onclick="clearScript()">New / Clear</button>
-    </div>
-  </header>
+  </div>
+  <div class="status" id="saveStatus"><span class="dot"></span><span id="saveStatusText">Loading…</span></div>
+  <div class="actions">
+    <button id="themeToggle" onclick="toggleTheme()">☀ Light mode</button>
+    <button onclick="exportFountain()">Export .fountain</button>
+    <button class="primary" id="pdfBtn" onclick="exportPDF()">Export PDF</button>
+    <button class="danger" onclick="clearScript()">New / Clear</button>
+  </div>
+</header>
 
-  <div class="app-body">
+<nav class="tabs">
+  <button class="tab active" data-tab="write" onclick="switchTab('write')">✎ Write</button>
+  <button class="tab" data-tab="schedule" onclick="switchTab('schedule')">📅 Schedule</button>
+  <button class="tab" data-tab="storyboard" onclick="switchTab('storyboard')">🎬 Storyboard</button>
+  <button class="tab" data-tab="characters" onclick="switchTab('characters')">🧑 Characters</button>
+  <button class="tab" data-tab="props" onclick="switchTab('props')">📦 Props & Sets</button>
+</nav>
+
+<div class="app-body">
+
+  <!-- WRITE -->
+  <div class="tab-panel active" id="tab-write" style="display:flex;">
     <aside class="breakdown-sidebar">
       <div class="sidebar-section">
         <h3>Scenes Index (<span class="n" id="sceneCount">0</span>)</h3>
         <ul id="locationList" class="breakdown-list"></ul>
       </div>
-
       <div class="sidebar-section">
         <h3>Characters / Cast (<span class="n" id="charCount">0</span>)</h3>
         <ul id="characterList" class="breakdown-list"></ul>
       </div>
-
       <div class="sidebar-section">
         <h3>Props & Production Tags</h3>
-        <p style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 0.5rem;">Use [prop: item] in action lines to track props.</p>
+        <p style="font-size:0.7rem;color:var(--text-dim);margin-bottom:0.5rem;">Tag inline: [prop: item], [set: item], [wardrobe: item]</p>
         <ul id="propList" class="breakdown-list"></ul>
       </div>
-
-      <div class="sidebar-section">
-        <div class="stats-line" id="statsLine">0 words · ~0 pages</div>
-      </div>
+      <div class="sidebar-section"><div class="stats-line" id="statsLine">0 words · ~0 pages</div></div>
     </aside>
-
-    <main>
+    <main class="editor-main">
       <div id="editor" class="page" contenteditable="true" spellcheck="true">
         <div class="element scene-heading" data-type="scene-heading">INT. EDITING SUITE - DAY</div>
         <div class="element action" data-type="action">A studio editor sits in front of dual monitors, holding a [prop: black espresso cup].</div>
@@ -311,344 +245,508 @@
     </main>
   </div>
 
-  <div class="formatting-toolbar">
-    <button onclick="setElementType('scene-heading')" id="btn-scene-heading">Scene Heading</button>
-    <button onclick="setElementType('action')" id="btn-action">Action</button>
-    <button onclick="setElementType('character')" id="btn-character">Character</button>
-    <button onclick="setElementType('parenthetical')" id="btn-parenthetical">Parenthetical</button>
-    <button onclick="setElementType('dialogue')" id="btn-dialogue">Dialogue</button>
-    <button onclick="setElementType('transition')" id="btn-transition">Transition</button>
-    <span class="toolbar-hint">Tab cycles element type · Enter moves to the natural next element</span>
+  <!-- SCHEDULE -->
+  <div class="tab-panel" id="tab-schedule">
+    <div class="panel-wrap">
+      <div class="panel-header"><h2>Shoot Schedule</h2><button onclick="renderSchedule()">↻ Sync from script</button></div>
+      <p class="panel-help">Assign each scene to a shoot day and mark it Shot once it's in the can. Marking a scene Shot automatically checks off its props and set items in the Props & Sets tab.</p>
+      <div id="scheduleBody"></div>
+      <div class="day-groups" id="dayGroups"></div>
+    </div>
   </div>
 
-  <script>
-    const editor = document.getElementById('editor');
-    const scriptTitle = document.getElementById('scriptTitle');
-    const STORAGE_KEY = 'screenplay:main';
+  <!-- STORYBOARD -->
+  <div class="tab-panel" id="tab-storyboard">
+    <div class="panel-wrap">
+      <div class="panel-header"><h2>Storyboard</h2><button onclick="renderStoryboard()">↻ Sync from script</button></div>
+      <p class="panel-help">One board per scene. Describe the shot, then generate a quick AI sketch or upload your own reference frame. AI art comes from a free public image service (Pollinations) — treat it as a rough visual placeholder, not a final frame.</p>
+      <div id="storyboardBody"></div>
+    </div>
+  </div>
 
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
+  <!-- CHARACTERS -->
+  <div class="tab-panel" id="tab-characters">
+    <div class="panel-wrap">
+      <div class="panel-header"><h2>Character Breakdown</h2><button onclick="renderCharacters()">↻ Sync from script</button></div>
+      <p class="panel-help">Characters are pulled from CHARACTER lines in your script automatically. Fill in the rest for your cast breakdown sheet.</p>
+      <div id="charactersBody"></div>
+      <div class="manual-add-row">
+        <input type="text" id="manualCharInput" placeholder="Add a character not yet in the script…">
+        <button onclick="addManualCharacter()">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROPS & SETS -->
+  <div class="tab-panel" id="tab-props">
+    <div class="panel-wrap">
+      <div class="panel-header"><h2>Props, Set Dressing & Wardrobe</h2><button onclick="renderPropsSets()">↻ Sync from script</button></div>
+      <p class="panel-help">Auto-collected from [prop: ], [set: ], and [wardrobe: ] tags in your script. Items check themselves off once every scene they appear in is marked Shot on the Schedule tab.</p>
+      <div class="prop-cols" id="propColsBody"></div>
+      <div class="manual-add-row">
+        <input type="text" id="manualPropInput" placeholder="Add an untagged item…">
+        <select id="manualPropCat"><option value="prop">Prop</option><option value="set">Set Dressing</option><option value="wardrobe">Wardrobe</option></select>
+        <button onclick="addManualProp()">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="formatting-toolbar" id="writeToolbar">
+  <button onclick="setElementType('scene-heading')" id="btn-scene-heading">Scene Heading</button>
+  <button onclick="setElementType('action')" id="btn-action">Action</button>
+  <button onclick="setElementType('character')" id="btn-character">Character</button>
+  <button onclick="setElementType('parenthetical')" id="btn-parenthetical">Parenthetical</button>
+  <button onclick="setElementType('dialogue')" id="btn-dialogue">Dialogue</button>
+  <button onclick="setElementType('transition')" id="btn-transition">Transition</button>
+  <span class="toolbar-hint">Tab cycles element type · Enter moves to the natural next element</span>
+</div>
+
+<script>
+const editor = document.getElementById('editor');
+const scriptTitle = document.getElementById('scriptTitle');
+const STORAGE_KEY = 'screenplay:main';
+
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+// ---------- Storage layer (Claude sandbox or plain localStorage once deployed) ----------
+const hasClaudeStorage = typeof window.storage !== 'undefined';
+async function storageGet(key) {
+  if (hasClaudeStorage) { try { return await window.storage.get(key, false); } catch(e){ return null; } }
+  const v = localStorage.getItem(key); return v ? { value: v } : null;
+}
+async function storageSet(key, value) {
+  if (hasClaudeStorage) { try { return await window.storage.set(key, value, false); } catch(e){ return null; } }
+  try { localStorage.setItem(key, value); return { value }; } catch(e){ return null; }
+}
+async function storageDelete(key) {
+  if (hasClaudeStorage) { try { return await window.storage.delete(key, false); } catch(e){ return null; } }
+  localStorage.removeItem(key); return { deleted: true };
+}
+
+// ---------- App state (persisted alongside the script) ----------
+let state = {
+  theme: 'dark',
+  schedule: {},      // sceneKey -> { day: number, status: 'planned'|'shot' }
+  storyboard: {},    // sceneKey -> [ {id, desc, img} ]
+  characters: {},    // name -> { role, age, desc, arc, manual: bool }
+  propsMeta: {}       // itemKey -> { category: 'prop'|'set'|'wardrobe', manual: bool }
+};
+
+let saveTimer = null, dirty = false, saving = false;
+function setStatus(cls, text) {
+  document.getElementById('saveStatus').className = 'status ' + cls;
+  document.getElementById('saveStatusText').textContent = text;
+}
+function scheduleSave() {
+  dirty = true; setStatus('saving', 'Unsaved changes');
+  clearTimeout(saveTimer); saveTimer = setTimeout(saveScript, 1200);
+}
+async function saveScript() {
+  if (saving) return; saving = true; setStatus('saving', 'Saving…');
+  const payload = JSON.stringify({ content: editor.innerHTML, title: scriptTitle.value, state });
+  const result = await storageSet(STORAGE_KEY, payload);
+  saving = false;
+  if (result) { dirty = false; setStatus('', 'Saved'); }
+  else { setStatus('error', 'Save failed — will retry'); scheduleSave(); }
+}
+async function loadScript() {
+  setStatus('saving', 'Loading…');
+  const result = await storageGet(STORAGE_KEY);
+  if (result && result.value) {
+    try {
+      const data = JSON.parse(result.value);
+      if (typeof data.content === 'string') editor.innerHTML = data.content;
+      if (typeof data.title === 'string') scriptTitle.value = data.title;
+      if (data.state) state = Object.assign(state, data.state);
+    } catch(e) {}
+  }
+  applyTheme();
+  setStatus('', 'Saved');
+  runBreakdown(); updateStats();
+  renderSchedule(); renderStoryboard(); renderCharacters(); renderPropsSets();
+}
+async function clearScript() {
+  if (!confirm('Start a new script? This clears the current title, pages, and all breakdown data. This cannot be undone.')) return;
+  editor.innerHTML = '<div class="element scene-heading" data-type="scene-heading">INT. LOCATION - DAY</div><div class="element action" data-type="action">&nbsp;</div>';
+  scriptTitle.value = 'UNTITLED SCREENPLAY';
+  state = { theme: state.theme, schedule: {}, storyboard: {}, characters: {}, propsMeta: {} };
+  await storageDelete(STORAGE_KEY);
+  runBreakdown(); updateStats();
+  renderSchedule(); renderStoryboard(); renderCharacters(); renderPropsSets();
+  setStatus('', 'Saved');
+}
+setInterval(() => { if (dirty) saveScript(); }, 15000);
+window.addEventListener('DOMContentLoaded', loadScript);
+editor.addEventListener('input', () => { scheduleSave(); runBreakdown(); updateStats(); });
+scriptTitle.addEventListener('input', scheduleSave);
+
+// ---------- Theme ----------
+function applyTheme() {
+  document.body.className = state.theme === 'light' ? 'light' : '';
+  document.getElementById('themeToggle').textContent = state.theme === 'light' ? '🌙 Dark mode' : '☀ Light mode';
+}
+function toggleTheme() { state.theme = state.theme === 'light' ? 'dark' : 'light'; applyTheme(); scheduleSave(); }
+
+// ---------- Tabs ----------
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+  document.querySelectorAll('nav.tabs .tab').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('tab-' + name);
+  panel.classList.add('active'); panel.style.display = 'flex';
+  document.querySelector('nav.tabs .tab[data-tab="' + name + '"]').classList.add('active');
+  document.getElementById('writeToolbar').style.display = name === 'write' ? 'flex' : 'none';
+  if (name === 'schedule') renderSchedule();
+  if (name === 'storyboard') renderStoryboard();
+  if (name === 'characters') renderCharacters();
+  if (name === 'props') renderPropsSets();
+}
+
+// ---------- Editor element navigation ----------
+function getCurrentElement() {
+  const sel = window.getSelection(); if (!sel.rangeCount) return null;
+  let node = sel.anchorNode;
+  while (node && node !== editor) { if (node.classList && node.classList.contains('element')) return node; node = node.parentNode; }
+  return null;
+}
+function setElementType(type) {
+  const el = getCurrentElement(); if (!el) return;
+  el.className = 'element ' + type; el.setAttribute('data-type', type);
+  updateToolbarActiveState(); runBreakdown(); scheduleSave();
+}
+function updateToolbarActiveState() {
+  const el = getCurrentElement();
+  document.querySelectorAll('.formatting-toolbar button[id^="btn-"]').forEach(b => b.classList.remove('active'));
+  if (el) { const btn = document.getElementById('btn-' + (el.getAttribute('data-type') || 'action')); if (btn) btn.classList.add('active'); }
+}
+editor.addEventListener('keydown', (e) => {
+  const currentEl = getCurrentElement(); if (!currentEl) return;
+  const currentType = currentEl.getAttribute('data-type') || 'action';
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const cycle = ['scene-heading','action','character','parenthetical','dialogue','transition'];
+    let idx = cycle.indexOf(currentType);
+    idx = e.shiftKey ? (idx - 1 + cycle.length) % cycle.length : (idx + 1) % cycle.length;
+    setElementType(cycle[idx]); return;
+  }
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    let nextType = 'action';
+    if (currentType === 'scene-heading') nextType = 'action';
+    else if (currentType === 'character') nextType = 'dialogue';
+    else if (currentType === 'parenthetical') nextType = 'dialogue';
+    else if (currentType === 'dialogue') nextType = 'action';
+    else if (currentType === 'transition') nextType = 'scene-heading';
+    const newEl = document.createElement('div');
+    newEl.className = 'element ' + nextType; newEl.setAttribute('data-type', nextType); newEl.innerHTML = '<br>';
+    if (currentEl.nextSibling) editor.insertBefore(newEl, currentEl.nextSibling); else editor.appendChild(newEl);
+    const range = document.createRange(), sel = window.getSelection();
+    range.setStart(newEl, 0); range.collapse(true); sel.removeAllRanges(); sel.addRange(range);
+    updateToolbarActiveState(); runBreakdown(); scheduleSave();
+  }
+});
+document.addEventListener('selectionchange', updateToolbarActiveState);
+
+function jumpToElement(idx) {
+  const el = editor.querySelector('[data-idx="' + idx + '"]'); if (!el) return;
+  switchTab('write');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.style.backgroundColor = 'rgba(59,107,246,0.18)';
+  setTimeout(() => { el.style.backgroundColor = ''; }, 1200);
+}
+
+// ---------- Core scene/character/prop extraction (shared by every tab) ----------
+function collectScriptData() {
+  const elements = editor.querySelectorAll('.element');
+  const scenes = [];        // { key, idx, text }
+  const seenHeadings = {};
+  const characters = {};    // name -> { count, firstIdx }
+  const items = {};         // itemKey -> { text, category, scenes:Set }
+
+  let currentSceneKey = null;
+
+  elements.forEach((el, idx) => {
+    el.setAttribute('data-idx', idx);
+    const type = el.getAttribute('data-type');
+    const text = el.innerText.trim();
+
+    if (type === 'scene-heading' && text.length > 0) {
+      const norm = text.toUpperCase();
+      seenHeadings[norm] = (seenHeadings[norm] || 0) + 1;
+      const key = norm + '::' + seenHeadings[norm];
+      scenes.push({ key, idx, text });
+      currentSceneKey = key;
+    } else if (type === 'character' && text.length > 0) {
+      const clean = text.replace(/\(.*\)/, '').trim();
+      if (!characters[clean]) characters[clean] = { count: 0, firstIdx: idx };
+      characters[clean].count += 1;
     }
 
-    // ---------- Storage layer ----------
-    // window.storage only exists inside Claude's artifact sandbox. If this file is
-    // deployed as a standalone site (GitHub Pages, Netlify, etc.), window.storage
-    // won't be there — but real browsers support localStorage fine outside that
-    // sandbox, so this falls back to it automatically. Same app, either environment.
-    const hasClaudeStorage = typeof window.storage !== 'undefined';
-
-    async function storageGet(key) {
-      if (hasClaudeStorage) {
-        try { return await window.storage.get(key, false); } catch (e) { return null; }
-      }
-      const v = localStorage.getItem(key);
-      return v ? { value: v } : null;
-    }
-    async function storageSet(key, value) {
-      if (hasClaudeStorage) {
-        try { return await window.storage.set(key, value, false); } catch (e) { return null; }
-      }
-      try { localStorage.setItem(key, value); return { value }; } catch (e) { return null; }
-    }
-    async function storageDelete(key) {
-      if (hasClaudeStorage) {
-        try { return await window.storage.delete(key, false); } catch (e) { return null; }
-      }
-      localStorage.removeItem(key);
-      return { deleted: true };
-    }
-
-    let saveTimer = null;
-    let dirty = false;
-    let saving = false;
-
-    function setStatus(state, text) {
-      const el = document.getElementById('saveStatus');
-      el.className = 'status ' + state;
-      document.getElementById('saveStatusText').textContent = text;
-    }
-
-    async function loadScript() {
-      setStatus('saving', 'Loading…');
-      const result = await storageGet(STORAGE_KEY);
-      if (result && result.value) {
-        try {
-          const data = JSON.parse(result.value);
-          if (typeof data.content === 'string') editor.innerHTML = data.content;
-          if (typeof data.title === 'string') scriptTitle.value = data.title;
-        } catch (e) { /* ignore corrupt data, start fresh */ }
-      }
-      setStatus('', 'Saved');
-      runBreakdown();
-      updateStats();
-    }
-
-    async function saveScript() {
-      if (saving) return;
-      saving = true;
-      setStatus('saving', 'Saving…');
-      const payload = JSON.stringify({ content: editor.innerHTML, title: scriptTitle.value });
-      const result = await storageSet(STORAGE_KEY, payload);
-      saving = false;
-      if (result) {
-        dirty = false;
-        setStatus('', 'Saved');
-      } else {
-        setStatus('error', 'Save failed — will retry');
-        scheduleSave();
-      }
-    }
-
-    function scheduleSave() {
-      dirty = true;
-      setStatus('saving', 'Unsaved changes');
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(saveScript, 1200);
-    }
-
-    async function clearScript() {
-      if (!confirm('Start a new script? This clears the current title and pages. This cannot be undone.')) return;
-      editor.innerHTML = '<div class="element scene-heading" data-type="scene-heading">INT. LOCATION - DAY</div><div class="element action" data-type="action">&nbsp;</div>';
-      scriptTitle.value = 'UNTITLED SCREENPLAY';
-      await storageDelete(STORAGE_KEY);
-      runBreakdown();
-      updateStats();
-      setStatus('', 'Saved');
-    }
-
-    setInterval(() => { if (dirty) saveScript(); }, 15000);
-
-    window.addEventListener('DOMContentLoaded', loadScript);
-    editor.addEventListener('input', () => { scheduleSave(); runBreakdown(); updateStats(); });
-    scriptTitle.addEventListener('input', scheduleSave);
-
-    function getCurrentElement() {
-      const selection = window.getSelection();
-      if (!selection.rangeCount) return null;
-      let node = selection.anchorNode;
-      while (node && node !== editor) {
-        if (node.classList && node.classList.contains('element')) return node;
-        node = node.parentNode;
-      }
-      return null;
-    }
-
-    function setElementType(type) {
-      const el = getCurrentElement();
-      if (!el) return;
-      el.className = 'element ' + type;
-      el.setAttribute('data-type', type);
-      updateToolbarActiveState();
-      runBreakdown();
-      scheduleSave();
-    }
-
-    function updateToolbarActiveState() {
-      const el = getCurrentElement();
-      const buttons = document.querySelectorAll('.formatting-toolbar button[id^="btn-"]');
-      buttons.forEach(btn => btn.classList.remove('active'));
-      if (el) {
-        const type = el.getAttribute('data-type') || 'action';
-        const activeBtn = document.getElementById('btn-' + type);
-        if (activeBtn) activeBtn.classList.add('active');
-      }
-    }
-
-    editor.addEventListener('keydown', (e) => {
-      const currentEl = getCurrentElement();
-      if (!currentEl) return;
-      const currentType = currentEl.getAttribute('data-type') || 'action';
-
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        const cycle = ['scene-heading', 'action', 'character', 'parenthetical', 'dialogue', 'transition'];
-        let idx = cycle.indexOf(currentType);
-        idx = e.shiftKey ? (idx - 1 + cycle.length) % cycle.length : (idx + 1) % cycle.length;
-        setElementType(cycle[idx]);
-        return;
-      }
-
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        let nextType = 'action';
-        if (currentType === 'scene-heading') nextType = 'action';
-        else if (currentType === 'character') nextType = 'dialogue';
-        else if (currentType === 'parenthetical') nextType = 'dialogue';
-        else if (currentType === 'dialogue') nextType = 'action';
-        else if (currentType === 'transition') nextType = 'scene-heading';
-
-        const newEl = document.createElement('div');
-        newEl.className = 'element ' + nextType;
-        newEl.setAttribute('data-type', nextType);
-        newEl.innerHTML = '<br>';
-
-        if (currentEl.nextSibling) editor.insertBefore(newEl, currentEl.nextSibling);
-        else editor.appendChild(newEl);
-
-        const range = document.createRange();
-        const sel = window.getSelection();
-        range.setStart(newEl, 0);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-
-        updateToolbarActiveState();
-        runBreakdown();
-        scheduleSave();
+    ['prop', 'set', 'wardrobe'].forEach(cat => {
+      const re = new RegExp('\\[' + cat + ':\\s*([^\\]]+)\\]', 'gi');
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        const raw = m[1].trim();
+        if (!raw) continue;
+        const key = raw.toLowerCase();
+        if (!items[key]) items[key] = { text: raw, category: cat, scenes: new Set(), idx };
+        if (currentSceneKey) items[key].scenes.add(currentSceneKey);
       }
     });
+  });
 
-    document.addEventListener('selectionchange', updateToolbarActiveState);
+  return { scenes, characters, items };
+}
 
-    function jumpToElement(idx) {
-      const el = editor.querySelector('[data-idx="' + idx + '"]');
-      if (!el) return;
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.style.backgroundColor = 'rgba(59, 107, 246, 0.18)';
-      setTimeout(() => { el.style.backgroundColor = ''; }, 1200);
+function runBreakdown() {
+  const data = collectScriptData();
+
+  document.getElementById('sceneCount').innerText = data.scenes.length;
+  document.getElementById('locationList').innerHTML = data.scenes.map((s, i) =>
+    `<li class="breakdown-item" onclick="jumpToElement(${s.idx})"><span>${i+1}. ${escapeHtml(s.text)}</span></li>`
+  ).join('') || '<li class="breakdown-item static">No scenes yet</li>';
+
+  const sortedChars = Object.entries(data.characters).sort((a,b) => b[1].count - a[1].count);
+  document.getElementById('charCount').innerText = sortedChars.length;
+  document.getElementById('characterList').innerHTML = sortedChars.map(([name, info]) =>
+    `<li class="breakdown-item" onclick="jumpToElement(${info.firstIdx})"><span>${escapeHtml(name)}</span><span class="breakdown-count">${info.count} lines</span></li>`
+  ).join('') || '<li class="breakdown-item static">No characters yet</li>';
+
+  const itemList = Object.values(data.items);
+  document.getElementById('propList').innerHTML = itemList.map(it =>
+    `<li class="breakdown-item" onclick="jumpToElement(${it.idx})"><span>${it.category==='prop'?'📦':it.category==='set'?'🏠':'👗'} ${escapeHtml(it.text)}</span></li>`
+  ).join('') || '<li class="breakdown-item static">No tagged items yet</li>';
+}
+
+function updateStats() {
+  const text = editor.innerText || '';
+  const words = (text.match(/\S+/g) || []).length;
+  const pages = Math.max(1, Math.round(words / 215 * 10) / 10);
+  document.getElementById('statsLine').textContent = `${words} words · ~${pages} pages`;
+}
+
+// ---------- SCHEDULE ----------
+function renderSchedule() {
+  const data = collectScriptData();
+  const body = document.getElementById('scheduleBody');
+  if (data.scenes.length === 0) { body.innerHTML = '<div class="empty-hint">Write some scenes in the Write tab, then come back here to schedule them.</div>'; document.getElementById('dayGroups').innerHTML=''; return; }
+
+  data.scenes.forEach((s, i) => { if (!state.schedule[s.key]) state.schedule[s.key] = { day: i + 1, status: 'planned' }; });
+
+  let rows = data.scenes.map((s, i) => {
+    const sched = state.schedule[s.key];
+    const badge = sched.status === 'shot' ? '<span class="shot-badge">Shot</span>' : '<span class="shot-badge pending">Planned</span>';
+    return `<tr>
+      <td><input type="number" min="1" value="${sched.day}" onchange="updateScheduleDay('${s.key}', this.value)" style="width:60px;"></td>
+      <td>${i+1}. ${escapeHtml(s.text)}</td>
+      <td><select onchange="updateScheduleStatus('${s.key}', this.value)">
+        <option value="planned" ${sched.status==='planned'?'selected':''}>Planned</option>
+        <option value="shot" ${sched.status==='shot'?'selected':''}>Shot</option>
+      </select></td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+
+  body.innerHTML = `<table class="sched-table"><thead><tr><th>Day</th><th>Scene</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+
+  const byDay = {};
+  data.scenes.forEach(s => { const d = state.schedule[s.key].day; (byDay[d] = byDay[d] || []).push(s); });
+  const dayKeys = Object.keys(byDay).map(Number).sort((a,b) => a-b);
+  document.getElementById('dayGroups').innerHTML = dayKeys.map(d =>
+    `<div class="day-group"><h4>Day ${d}</h4><ul>${byDay[d].map(s => `<li>${escapeHtml(s.text)} ${state.schedule[s.key].status==='shot'?'✓':''}</li>`).join('')}</ul></div>`
+  ).join('');
+}
+function updateScheduleDay(key, val) { state.schedule[key].day = parseInt(val,10) || 1; scheduleSave(); renderSchedule(); }
+function updateScheduleStatus(key, val) { state.schedule[key].status = val; scheduleSave(); renderSchedule(); renderPropsSets(); }
+
+// ---------- STORYBOARD ----------
+function renderStoryboard() {
+  const data = collectScriptData();
+  const body = document.getElementById('storyboardBody');
+  if (data.scenes.length === 0) { body.innerHTML = '<div class="empty-hint">No scenes yet — write your scene headings in the Write tab first.</div>'; return; }
+
+  body.innerHTML = data.scenes.map((s, sceneIdx) => {
+    if (!state.storyboard[s.key]) state.storyboard[s.key] = [];
+    const panels = state.storyboard[s.key];
+    const panelsHtml = panels.map((p, pIdx) => `
+      <div class="story-panel">
+        ${p.img ? `<img src="${p.img}" alt="Storyboard frame">` : `<div class="placeholder">No image yet</div>`}
+        <textarea placeholder="Shot description…" onchange="updatePanelDesc('${s.key}', ${pIdx}, this.value)">${escapeHtml(p.desc || '')}</textarea>
+        <div class="panel-actions">
+          <button onclick="generateAIPanel('${s.key}', ${pIdx}, '${escapeHtml(s.text).replace(/'/g,"&#39;")}')">✨ AI sketch</button>
+          <label style="flex:1;">
+            <input type="file" accept="image/*" style="display:none;" onchange="uploadPanelImage('${s.key}', ${pIdx}, this)">
+            <span style="display:block;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:0.32rem;cursor:pointer;">⬆ Upload</span>
+          </label>
+          <button onclick="removePanel('${s.key}', ${pIdx})">✕</button>
+        </div>
+      </div>`).join('');
+
+    return `<div class="storyboard-scene">
+      <h3 onclick="jumpToElement(${s.idx})">${sceneIdx+1}. ${escapeHtml(s.text)}</h3>
+      <div class="panel-grid">${panelsHtml}</div>
+      <button class="add-panel-btn" onclick="addPanel('${s.key}')">+ Add panel</button>
+    </div>`;
+  }).join('');
+}
+function addPanel(key) { state.storyboard[key] = state.storyboard[key] || []; state.storyboard[key].push({ id: Date.now(), desc: '', img: '' }); scheduleSave(); renderStoryboard(); }
+function removePanel(key, idx) { state.storyboard[key].splice(idx, 1); scheduleSave(); renderStoryboard(); }
+function updatePanelDesc(key, idx, val) { state.storyboard[key][idx].desc = val; scheduleSave(); }
+function uploadPanelImage(key, idx, input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { state.storyboard[key][idx].img = reader.result; scheduleSave(); renderStoryboard(); };
+  reader.readAsDataURL(file);
+}
+function generateAIPanel(key, idx, sceneText) {
+  const panel = state.storyboard[key][idx];
+  const desc = panel.desc || sceneText;
+  const prompt = encodeURIComponent(desc + ', black and white storyboard sketch, cinematic framing, pencil illustration');
+  panel.img = `https://image.pollinations.ai/prompt/${prompt}?width=512&height=384&nologo=true&seed=${Date.now()}`;
+  scheduleSave(); renderStoryboard();
+}
+
+// ---------- CHARACTERS ----------
+function renderCharacters() {
+  const data = collectScriptData();
+  const body = document.getElementById('charactersBody');
+  const names = new Set([...Object.keys(data.characters), ...Object.keys(state.characters).filter(n => state.characters[n].manual)]);
+  if (names.size === 0) { body.innerHTML = '<div class="empty-hint">No CHARACTER lines detected yet — write some dialogue in the Write tab, or add a character manually below.</div>'; return; }
+
+  body.innerHTML = [...names].map(name => {
+    if (!state.characters[name]) state.characters[name] = { role: 'Supporting', age: '', desc: '', arc: '' };
+    const c = state.characters[name];
+    const lines = data.characters[name] ? data.characters[name].count : 0;
+    return `<div class="char-card">
+      <div class="row"><div class="name">${escapeHtml(name)} ${lines ? `<span style="color:var(--text-dim);font-weight:400;font-size:0.75rem;">— ${lines} dialogue lines</span>` : '<span style="color:var(--text-dim);font-weight:400;font-size:0.75rem;">— manually added</span>'}</div></div>
+      <div class="row">
+        <div class="field-group"><span class="field-label">Role</span>
+          <select onchange="updateCharField('${name.replace(/'/g,"&#39;")}','role',this.value)">
+            <option ${c.role==='Lead'?'selected':''}>Lead</option>
+            <option ${c.role==='Supporting'?'selected':''}>Supporting</option>
+            <option ${c.role==='Minor'?'selected':''}>Minor</option>
+          </select>
+        </div>
+        <div class="field-group"><span class="field-label">Age</span>
+          <input type="text" value="${escapeHtml(c.age)}" onchange="updateCharField('${name.replace(/'/g,"&#39;")}','age',this.value)">
+        </div>
+      </div>
+      <span class="field-label">One-line description</span>
+      <textarea onchange="updateCharField('${name.replace(/'/g,"&#39;")}','desc',this.value)">${escapeHtml(c.desc)}</textarea>
+      <span class="field-label" style="margin-top:0.4rem;">Arc notes</span>
+      <textarea onchange="updateCharField('${name.replace(/'/g,"&#39;")}','arc',this.value)">${escapeHtml(c.arc)}</textarea>
+    </div>`;
+  }).join('');
+}
+function updateCharField(name, field, val) { state.characters[name][field] = val; scheduleSave(); }
+function addManualCharacter() {
+  const input = document.getElementById('manualCharInput');
+  const name = input.value.trim().toUpperCase(); if (!name) return;
+  state.characters[name] = { role: 'Supporting', age: '', desc: '', arc: '', manual: true };
+  input.value = ''; scheduleSave(); renderCharacters();
+}
+
+// ---------- PROPS & SETS ----------
+function renderPropsSets() {
+  const data = collectScriptData();
+  const cats = { prop: 'Props', set: 'Set Dressing', wardrobe: 'Wardrobe' };
+  const allKeys = new Set([...Object.keys(data.items), ...Object.keys(state.propsMeta).filter(k => state.propsMeta[k].manual)]);
+
+  const grouped = { prop: [], set: [], wardrobe: [] };
+  allKeys.forEach(key => {
+    const auto = data.items[key];
+    if (!state.propsMeta[key]) state.propsMeta[key] = { category: auto ? auto.category : 'prop' };
+    const meta = state.propsMeta[key];
+    const cat = meta.manual ? meta.category : (auto ? auto.category : meta.category);
+    const sceneKeys = auto ? [...auto.scenes] : [];
+    const allShot = sceneKeys.length > 0 && sceneKeys.every(sk => state.schedule[sk] && state.schedule[sk].status === 'shot');
+    grouped[cat] = grouped[cat] || [];
+    grouped[cat].push({ key, text: auto ? auto.text : key, sceneKeys, allShot, manual: !auto });
+  });
+
+  document.getElementById('propColsBody').innerHTML = Object.keys(cats).map(cat => {
+    const list = grouped[cat] || [];
+    const items = list.length ? list.map(it => {
+      const sceneLabel = it.sceneKeys.length ? it.sceneKeys.map(sk => sk.split('::')[0]).join(', ') : 'not yet in a scene';
+      return `<div class="prop-card">
+        <div class="row"><div class="name">${it.allShot ? '✅' : '⬜'} ${escapeHtml(it.text)}</div></div>
+        <div class="row">
+          <select onchange="updatePropCategory('${it.key}', this.value)">
+            <option value="prop" ${cat==='prop'?'selected':''}>Prop</option>
+            <option value="set" ${cat==='set'?'selected':''}>Set Dressing</option>
+            <option value="wardrobe" ${cat==='wardrobe'?'selected':''}>Wardrobe</option>
+          </select>
+        </div>
+        <div class="prop-scenes">Scenes: ${escapeHtml(sceneLabel)}</div>
+      </div>`;
+    }).join('') : '<div class="empty-hint">Nothing here yet</div>';
+    return `<div class="prop-col"><h3>${cats[cat]}</h3>${items}</div>`;
+  }).join('');
+}
+function updatePropCategory(key, val) {
+  if (!state.propsMeta[key]) state.propsMeta[key] = {};
+  state.propsMeta[key].category = val; state.propsMeta[key].manual = true;
+  scheduleSave(); renderPropsSets();
+}
+function addManualProp() {
+  const input = document.getElementById('manualPropInput');
+  const cat = document.getElementById('manualPropCat').value;
+  const text = input.value.trim(); if (!text) return;
+  const key = text.toLowerCase();
+  state.propsMeta[key] = { category: cat, manual: true, text };
+  input.value = ''; scheduleSave(); renderPropsSets();
+}
+
+// ---------- PDF export (paginated) ----------
+async function exportPDF() {
+  const btn = document.getElementById('pdfBtn');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Exporting…';
+  try {
+    const { jsPDF } = window.jspdf;
+    const canvas = await html2canvas(editor, { scale: 2, backgroundColor: '#ffffff' });
+    const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
+    const pageWidthPt = pdf.internal.pageSize.getWidth(), pageHeightPt = pdf.internal.pageSize.getHeight();
+    const ratio = pageWidthPt / canvas.width, sliceHeightPx = pageHeightPt / ratio;
+    let renderedPx = 0, pageNum = 0;
+    while (renderedPx < canvas.height) {
+      const thisSlicePx = Math.min(sliceHeightPx, canvas.height - renderedPx);
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvas.width; pageCanvas.height = thisSlicePx;
+      const ctx = pageCanvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
+      ctx.drawImage(canvas, 0, renderedPx, canvas.width, thisSlicePx, 0, 0, canvas.width, thisSlicePx);
+      const imgData = pageCanvas.toDataURL('image/png');
+      if (pageNum > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, 0, pageWidthPt, thisSlicePx * ratio);
+      renderedPx += thisSlicePx; pageNum++;
     }
+    pdf.save((scriptTitle.value || 'screenplay') + '.pdf');
+  } catch(err) { alert('PDF export failed. Please try again.'); }
+  finally { btn.disabled = false; btn.textContent = orig; }
+}
 
-    function runBreakdown() {
-      const elements = editor.querySelectorAll('.element');
-      const characters = {};
-      const locations = [];
-      const props = [];
+function exportFountain() {
+  const elements = editor.querySelectorAll('.element');
+  let text = 'Title: ' + (scriptTitle.value || 'Untitled Screenplay') + '\n\n';
+  elements.forEach(el => {
+    const type = el.getAttribute('data-type'); const content = el.innerText.trim();
+    if (type === 'scene-heading') text += '\n' + content.toUpperCase() + '\n\n';
+    else if (type === 'character') text += '\n' + content.toUpperCase() + '\n';
+    else if (type === 'parenthetical') text += '(' + content.replace(/^\(/,'').replace(/\)$/,'') + ')\n';
+    else if (type === 'dialogue') text += content + '\n\n';
+    else if (type === 'transition') text += '> ' + content.toUpperCase() + '\n\n';
+    else text += content + '\n\n';
+  });
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = (scriptTitle.value || 'screenplay') + '.fountain'; a.click(); URL.revokeObjectURL(a.href);
+}
 
-      elements.forEach((el, idx) => {
-        el.setAttribute('data-idx', idx);
-        const type = el.getAttribute('data-type');
-        const text = el.innerText.trim();
-
-        if (type === 'scene-heading' && text.length > 0) {
-          locations.push({ text, idx });
-        } else if (type === 'character' && text.length > 0) {
-          const cleanChar = text.replace(/\(.*\)/, '').trim();
-          if (!characters[cleanChar]) characters[cleanChar] = { count: 0, firstIdx: idx };
-          characters[cleanChar].count += 1;
-        }
-
-        const propMatches = text.match(/\[prop:\s*([^\]]+)\]/gi);
-        if (propMatches) {
-          propMatches.forEach(m => {
-            const item = m.replace(/\[prop:\s*/i, '').replace(']', '').trim();
-            if (item && !props.some(p => p.text.toLowerCase() === item.toLowerCase())) {
-              props.push({ text: item, idx });
-            }
-          });
-        }
-      });
-
-      document.getElementById('sceneCount').innerText = locations.length;
-      document.getElementById('locationList').innerHTML = locations.map((loc, i) =>
-        `<li class="breakdown-item" onclick="jumpToElement(${loc.idx})">` +
-          `<span>${i + 1}. ${escapeHtml(loc.text)}</span>` +
-        `</li>`
-      ).join('') || '<li class="breakdown-item static">No scenes yet</li>';
-
-      const sortedChars = Object.entries(characters).sort((a, b) => b[1].count - a[1].count);
-      document.getElementById('charCount').innerText = sortedChars.length;
-      document.getElementById('characterList').innerHTML = sortedChars.map(([char, info]) =>
-        `<li class="breakdown-item" onclick="jumpToElement(${info.firstIdx})">` +
-          `<span>${escapeHtml(char)}</span><span class="breakdown-count">${info.count} lines</span>` +
-        `</li>`
-      ).join('') || '<li class="breakdown-item static">No characters yet</li>';
-
-      document.getElementById('propList').innerHTML = props.map(prop =>
-        `<li class="breakdown-item" onclick="jumpToElement(${prop.idx})"><span>📦 ${escapeHtml(prop.text)}</span></li>`
-      ).join('') || '<li class="breakdown-item static">No props tagged yet</li>';
-    }
-
-    function updateStats() {
-      const text = editor.innerText || '';
-      const words = (text.match(/\S+/g) || []).length;
-      const pages = Math.max(1, Math.round(words / 215 * 10) / 10);
-      document.getElementById('statsLine').textContent = `${words} words · ~${pages} pages`;
-    }
-
-    async function exportPDF() {
-      const btn = document.getElementById('pdfBtn');
-      btn.disabled = true;
-      const originalLabel = btn.textContent;
-      btn.textContent = 'Exporting…';
-      try {
-        const { jsPDF } = window.jspdf;
-        const canvas = await html2canvas(editor, { scale: 2, backgroundColor: '#ffffff' });
-
-        const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
-        const pageWidthPt = pdf.internal.pageSize.getWidth();
-        const pageHeightPt = pdf.internal.pageSize.getHeight();
-        const ratio = pageWidthPt / canvas.width;
-        const sliceHeightPx = pageHeightPt / ratio;
-
-        let renderedPx = 0;
-        let pageNum = 0;
-        while (renderedPx < canvas.height) {
-          const thisSlicePx = Math.min(sliceHeightPx, canvas.height - renderedPx);
-
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = canvas.width;
-          pageCanvas.height = thisSlicePx;
-          const ctx = pageCanvas.getContext('2d');
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(canvas, 0, renderedPx, canvas.width, thisSlicePx, 0, 0, canvas.width, thisSlicePx);
-
-          const imgData = pageCanvas.toDataURL('image/png');
-          if (pageNum > 0) pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, 0, pageWidthPt, thisSlicePx * ratio);
-
-          renderedPx += thisSlicePx;
-          pageNum++;
-        }
-
-        pdf.save((scriptTitle.value || 'screenplay') + '.pdf');
-      } catch (err) {
-        alert('PDF export failed. Please try again.');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = originalLabel;
-      }
-    }
-
-    function exportFountain() {
-      const elements = editor.querySelectorAll('.element');
-      let text = 'Title: ' + (scriptTitle.value || 'Untitled Screenplay') + '\n\n';
-      elements.forEach(el => {
-        const type = el.getAttribute('data-type');
-        const content = el.innerText.trim();
-
-        if (type === 'scene-heading') text += '\n' + content.toUpperCase() + '\n\n';
-        else if (type === 'character') text += '\n' + content.toUpperCase() + '\n';
-        else if (type === 'parenthetical') {
-          const stripped = content.replace(/^\(/, '').replace(/\)$/, '');
-          text += '(' + stripped + ')\n';
-        }
-        else if (type === 'dialogue') text += content + '\n\n';
-        else if (type === 'transition') text += '> ' + content.toUpperCase() + '\n\n';
-        else text += content + '\n\n';
-      });
-
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = (scriptTitle.value || 'screenplay') + '.fountain';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    // ---------- PWA install support ----------
-    // Registering this makes Chrome/Edge offer "Install app" and lets iOS's
-    // "Add to Home Screen" launch full-screen instead of as a browser tab.
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {
-          // Fine to ignore — the app still works fully without offline caching,
-          // e.g. when opened directly as a local file instead of a real server.
-        });
-      });
-    }
-  </script>
+// ---------- PWA install ----------
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+</script>
 </body>
 </html>
