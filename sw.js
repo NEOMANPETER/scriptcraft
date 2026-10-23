@@ -2,7 +2,7 @@
 // Everything the app needs (including PDF export, which is built into index.html)
 // is cached on the first visit. Your scripts live in the browser's own storage,
 // not in this cache.
-const CACHE = 'scriptcraft-v3-3';
+const CACHE = 'scriptcraft-v3-4-0';
 const SHELL = [
   './',
   './index.html',
@@ -43,7 +43,9 @@ self.addEventListener('fetch', (event) => {
 
   // Network first so updates arrive quickly; cache is the offline fallback.
   event.respondWith(
-    fetch(req)
+    // 'no-cache' makes the browser re-check with the server, so new uploads show up
+    // straight away instead of after GitHub's ~10 minute page cache.
+    fetch(req, sameOrigin ? { cache: 'no-cache' } : undefined)
       .then((res) => {
         if (res && (res.ok || res.type === 'opaque')) {
           const copy = res.clone();
