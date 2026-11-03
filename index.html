@@ -361,6 +361,7 @@ body.kb nav.tabs{display:none}
           <button data-act="newProj">New project</button>
           <button data-act="openFile">Open file… <small>.scriptcraft · .fountain</small></button>
           <button data-act="saveFile">Save project <small>Ctrl+S</small></button>
+          <button data-act="saveAs">Save as…</button>
           <button data-act="openInfo">Script info… <small>author · company</small></button>
           <button data-act="openVersions">Version history…</button>
           <hr>
@@ -413,15 +414,17 @@ body.kb nav.tabs{display:none}
       <div class="menu-dropdown-wrap">
         <button class="menubar-btn" data-act="menu" data-m="formatMenu" aria-haspopup="true">Format</button>
         <div class="dropdown-menu" id="formatMenu" hidden>
-          <button data-act="setElem" data-t="scene-heading">Scene Heading</button>
-          <button data-act="setElem" data-t="action">Action</button>
-          <button data-act="setElem" data-t="character">Character</button>
-          <button data-act="setElem" data-t="parenthetical">Parenthetical</button>
-          <button data-act="setElem" data-t="dialogue">Dialogue</button>
-          <button data-act="setElem" data-t="transition">Transition</button>
-          <button data-act="setElem" data-t="act">Act Break</button>
+          <button data-act="setElem" data-t="scene-heading">Scene Heading <small>Alt+S</small></button>
+          <button data-act="setElem" data-t="action">Action <small>Alt+A</small></button>
+          <button data-act="setElem" data-t="character">Character <small>Alt+C</small></button>
+          <button data-act="setElem" data-t="parenthetical">Parenthetical <small>Alt+P</small></button>
+          <button data-act="setElem" data-t="dialogue">Dialogue <small>Alt+D</small></button>
+          <button data-act="setElem" data-t="transition">Transition <small>Alt+T</small></button>
+          <button data-act="setElem" data-t="act">Act Break <small>Alt+B</small></button>
           <hr>
           <button data-act="toggleDual">Dual dialogue (on / off)</button>
+          <button data-act="splitParas">Split this block into paragraphs</button>
+          <button data-act="togEnterCycle">Enter on an empty line changes its type <small id="ecState">on</small></button>
         </div>
       </div>
 
@@ -688,6 +691,8 @@ body.kb nav.tabs{display:none}
   <h4>More writing tools</h4>
   <ul>
     <li><b>Parentheticals</b> get their brackets automatically. <b>Dual dialogue:</b> put the cursor on the second character's name and use <b>Format ▸ Dual dialogue</b> (or the DUAL key); the two speeches print side by side.</li>
+    <li><b>Line-type shortcuts:</b> hold <kbd>Alt</kbd> and press <kbd>S</kbd> Scene heading, <kbd>A</kbd> Action, <kbd>C</kbd> Character, <kbd>P</kbd> Parenthetical, <kbd>D</kbd> Dialogue, <kbd>T</kbd> Transition or <kbd>B</kbd> Act break. Just click anywhere in a paragraph; you do not need to select it. Pressing <kbd>Enter</kbd> on an <i>empty</i> line also steps it to the next line type (switch this off in the Format menu).</li>
+    <li><b>Pasting from Word:</b> every paragraph becomes its own line and ScriptCraft guesses its type (scene headings, character names, dialogue, transitions). To change a paragraph, click in it and use an Alt shortcut. <b>Format ▸ Split this block into paragraphs</b> separates a block that has several lines.</li>
     <li><b>Find &amp; replace:</b> <kbd>Ctrl</kbd>+<kbd>F</kbd>. <b>Undo / redo:</b> <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> now also undo new lines and type changes.</li>
     <li><b>Dashed lines</b> on the page show where pages will break in the PDF. Switch them off in <b>View ▸ Page breaks</b>. <b>File ▸ Paper size</b> switches between A4 and Letter.</li>
     <li><b>Draft colour:</b> pick a colour <i>before</i> you edit. Lines you change or add after that are marked with * on screen and in the PDF. Switch back to White to clear the marks.</li>
@@ -1373,6 +1378,33 @@ function buildReadQueue(doc,from){
   });
   return q;
 }
+function parsePlainScript(text){
+  const rows=String(text).replace(/\r\n?/g,'\n').split('\n').map(function(l){return l.replace(/\u00A0/g,' ').trim();});
+  const doc=[]; var mode='';
+  const isCaps=function(t){return /[A-Z]/.test(t)&&t===t.toUpperCase();};
+  const isScene=function(t){return /^(\.(?!\.)|(INT|EXT|EST|INT\.?\/EXT|EXT\.?\/INT|I\/E)[\. ])/i.test(t);};
+  const isTrans=function(t){return (/^>\s*\S/.test(t)&&!/<$/.test(t))||(isCaps(t)&&/(TO:|OUT\.|IN:|BLACK\.)$/.test(t));};
+  const coreOf=function(t){return t.replace(/\(.*?\)/g,'').replace(/^@/,'').replace(/\s*\^$/,'').trim();};
+  for(var i=0;i<rows.length;i++){
+    const t=rows[i];
+    if(!t){mode='';continue;}
+    if(/^#+\s*\S/.test(t)){doc.push({t:'act',x:t.replace(/^#+\s*/,'')});mode='';continue;}
+    if(isScene(t)){doc.push({t:'scene-heading',x:t.replace(/^\./,'').toUpperCase()});mode='';continue;}
+    if(isTrans(t)){doc.push({t:'transition',x:t.replace(/^>\s*/,'')});mode='';continue;}
+    if(mode==='char'){
+      if(/^\(.*\)$/.test(t)){doc.push({t:'parenthetical',x:t});continue;}
+      doc.push({t:'dialogue',x:t}); mode=''; continue;
+    }
+    const core=coreOf(t), nxt=rows[i+1];
+    if(core&&core.length<=38&&isCaps(core)&&!/[.:!?]$/.test(core)&&nxt&&!isScene(nxt)&&!isTrans(nxt)){
+      const ch={t:'character',x:t.replace(/^@/,'').replace(/\s*\^$/,'')};
+      if(/\^\s*$/.test(t)) ch.d=true;
+      doc.push(ch); mode='char'; continue;
+    }
+    doc.push({t:'action',x:t});
+  }
+  return {doc:doc};
+}
 function safeName(s){return (String(s||'').replace(/[^\w\- ]+/g,'').trim().slice(0,60))||'screenplay';}
 /*PURE-END*/
 </script>
@@ -1383,7 +1415,7 @@ function safeName(s){return (String(s||'').replace(/[^\w\- ]+/g,'').trim().slice
 const $=function(id){return document.getElementById(id);};
 const editor=$('editor'), avRoot=$('avEditor'), scriptTitle=$('scriptTitle');
 const STORAGE_KEY='screenplay:main';
-const APP_VERSION='3.4.0';
+const APP_VERSION='3.4.1';
 // To receive feedback directly, add your WhatsApp number (country code, digits only, e.g. '2348012345678') and/or an email.
 // Until then the "Send feedback" button copies a short technical report (no script content) for the tester to paste to you.
 const FEEDBACK={whatsapp:'',email:''};
@@ -1463,11 +1495,11 @@ function emptySeg(){return {id:uid(),title:'Segment 1',rows:[{id:uid(),v:'',a:''
 function defaultState(sample){
   return {theme:'light',mode:'screenplay',author:'',company:'',rev:'white',revBase:null,callSheet:{callTime:'',location:'',weather:'',hospital:''},
           schedule:{},storyboard:{},characters:{},propsMeta:{},assets:[],checks:{},synopsis:{},av:{segments:[]},lastBackup:'',
-          ui:{tipSeen:false,snooze:0,sceneNums:true,contd:true,themeSet:false,paper:'a4',pageBreaks:true}};
+          ui:{tipSeen:false,snooze:0,sceneNums:true,contd:true,themeSet:false,paper:'a4',pageBreaks:true,enterCycle:true}};
 }
 function carryUi(st){
   st.theme=state.theme; st.ui.themeSet=state.ui.themeSet; st.ui.paper=state.ui.paper; st.ui.pageBreaks=state.ui.pageBreaks;
-  st.ui.sceneNums=state.ui.sceneNums; st.ui.contd=state.ui.contd; st.ui.tipSeen=true; return st;
+  st.ui.sceneNums=state.ui.sceneNums; st.ui.contd=state.ui.contd; st.ui.enterCycle=state.ui.enterCycle; st.ui.tipSeen=true; return st;
 }
 function cleanAsset(a){
   return {id:String(a.id||uid()).slice(0,20),cat:CATS.indexOf(a.cat)>=0?a.cat:'gear',name:String(a.name||'').slice(0,80),note:String(a.note||'').slice(0,300),
@@ -1495,7 +1527,7 @@ function mergeState(s){
   if(s.av&&Array.isArray(s.av.segments)) b.av.segments=s.av.segments.filter(function(x){return x&&typeof x==='object';}).map(cleanSeg);
   if(s.ui&&typeof s.ui==='object'){
     b.ui.tipSeen=!!s.ui.tipSeen; b.ui.snooze=Number(s.ui.snooze)||0; b.ui.sceneNums=s.ui.sceneNums!==false; b.ui.contd=s.ui.contd!==false;
-    b.ui.themeSet=themeSet; b.ui.paper=s.ui.paper==='letter'?'letter':'a4'; b.ui.pageBreaks=s.ui.pageBreaks!==false;
+    b.ui.themeSet=themeSet; b.ui.paper=s.ui.paper==='letter'?'letter':'a4'; b.ui.pageBreaks=s.ui.pageBreaks!==false; b.ui.enterCycle=s.ui.enterCycle!==false;
   }
   return b;
 }
@@ -1741,6 +1773,9 @@ editor.addEventListener('keydown',function(e){
       cur.innerHTML='<br>'; cur.className='element dialogue'; cur.setAttribute('data-type','dialogue');
       focusAtStart(cur); updateToolbarActiveState(); invalidate(); scheduleSave(); return;
     }
+    if(state.ui.enterCycle!==false&&elText(cur).trim()===''){
+      setElementType(TYPES[(TYPES.indexOf(type)+1)%TYPES.length]); return;
+    }
     var next='action';
     if(type==='character'||type==='parenthetical') next='dialogue';
     else if(type==='transition'||type==='act') next='scene-heading';
@@ -1752,7 +1787,7 @@ editor.addEventListener('paste',function(e){
   e.preventDefault();
   const t=(e.clipboardData||window.clipboardData).getData('text/plain'); if(!t) return;
   if(t.indexOf('\n')<0){document.execCommand('insertText',false,t);return;}
-  insertElementsAfterCurrent(parseFountain(t).doc); invalidate(); scheduleSave();
+  insertElementsAfterCurrent(parsePlainScript(t).doc); invalidate(); scheduleSave();
 });
 document.addEventListener('selectionchange',function(){
   const sel=window.getSelection();
@@ -2092,6 +2127,7 @@ function updateMenuInfo(){
   $('cdState').textContent=state.ui.contd!==false?'on':'off';
   $('ppState').textContent=state.ui.paper==='letter'?'Letter':'A4';
   $('pbState').textContent=state.ui.pageBreaks!==false?'on':'off';
+  $('ecState').textContent=state.ui.enterCycle!==false?'on':'off';
   $('menuNote').textContent='Last backup: '+agoText(lastBackupMs())+' · v'+APP_VERSION;
 }
 function refreshChrome(){renderNav();renderInspector();updateStats();checkBackupNag();markRevisions();refreshPageBreaks();editor.setAttribute('data-blank',(editor.children.length===1&&elText(editor.firstElementChild).trim()==='')?'1':'0');}
@@ -2288,12 +2324,50 @@ function exportPDF(which){
 function exportFountain(){
   download(new Blob([toFountain(serializeDoc(),scriptTitle.value,state.author)],{type:'text/plain;charset=utf-8'}),safeName(scriptTitle.value)+'.fountain');
 }
-function saveProjectFile(){
+
+var fileHandle=null;
+function projectFileObj(){
   state.lastBackup=new Date().toISOString(); state.ui.snooze=0;
   const obj=projectPayload(); obj.saved=new Date().toISOString(); obj.app='ScriptCraft';
-  download(new Blob([JSON.stringify(obj)],{type:'application/octet-stream'}),safeName(scriptTitle.value)+'.scriptcraft');
-  toast('Project file saved');
-  $('backupBox').hidden=true; scheduleSave();
+  return obj;
+}
+function afterBackup(msg){$('backupBox').hidden=true;scheduleSave();toast(msg);}
+async function writeToHandle(handle){
+  const w=await handle.createWritable();
+  await w.write(JSON.stringify(projectFileObj()));
+  await w.close();
+}
+async function saveAs(){
+  if(window.showSaveFilePicker){
+    try{
+      const hd=await window.showSaveFilePicker({suggestedName:safeName(scriptTitle.value)+'.scriptcraft',types:[{description:'ScriptCraft project',accept:{'application/octet-stream':['.scriptcraft']}}]});
+      await writeToHandle(hd); fileHandle=hd; afterBackup('Saved as '+hd.name); return;
+    }catch(e){ if(e&&e.name==='AbortError') return; }
+  }
+  const nm=window.prompt('Save as — file name:',safeName(scriptTitle.value));
+  if(nm===null) return;
+  const clean=safeName(nm);
+  download(new Blob([JSON.stringify(projectFileObj())],{type:'application/octet-stream'}),clean+'.scriptcraft');
+  afterBackup('Saved as '+clean+'.scriptcraft');
+}
+async function saveProjectFile(){
+  if(fileHandle){
+    try{await writeToHandle(fileHandle);afterBackup('Saved to '+fileHandle.name);return;}catch(e){fileHandle=null;}
+  }
+  if(window.showSaveFilePicker){await saveAs();return;}
+  download(new Blob([JSON.stringify(projectFileObj())],{type:'application/octet-stream'}),safeName(scriptTitle.value)+'.scriptcraft');
+  afterBackup('Project file saved');
+}
+function splitParas(){
+  restoreSel();
+  const el=getCurrentElement();
+  if(state.mode!=='screenplay'||!el){toast('Click inside the paragraph you want to split');return;}
+  const parts=elText(el).split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  if(parts.length<2){toast('This block is already one paragraph');return;}
+  const type=el.getAttribute('data-type')||'action';
+  el.textContent=parts[0]; var prev=el;
+  parts.slice(1).forEach(function(s){const n=mkEl(type,s);editor.insertBefore(n,prev.nextSibling);prev=n;});
+  scheduleSave(); invalidate(); toast('Split into '+parts.length+' paragraphs');
 }
 
 function refreshAll(){
@@ -2311,7 +2385,7 @@ async function openProjectText(text,name){
     const doc=Array.isArray(obj.doc)?cleanDoc(obj.doc):docFromHTML(obj.content);
     const st=mergeState(obj.state); st.theme=state.theme; st.ui.themeSet=state.ui.themeSet; st.ui.tipSeen=true; st.lastBackup=new Date().toISOString(); state=st;
     loadDoc(doc); scriptTitle.value=typeof obj.title==='string'?obj.title.slice(0,120):'UNTITLED';
-    activeKey=null; refreshAll(); scheduleSave(); toast('Opened '+name); return;
+    fileHandle=null; activeKey=null; refreshAll(); scheduleSave(); toast('Opened '+name); return;
   }
   const looksFdx=isFdx||(!isFountain&&/<FinalDraft\b/i.test(text));
   const res=looksFdx?parseFdx(text):parseFountain(text);
@@ -2322,7 +2396,7 @@ async function openProjectText(text,name){
   if(looksFdx) title=res.title||'';
   else{ title=res.meta.title||''; if(res.meta.author||res.meta.authors) st.author=String(res.meta.author||res.meta.authors).slice(0,80); }
   state=st; loadDoc(res.doc); scriptTitle.value=(title||name.replace(/\.[^.]+$/,'')).slice(0,120);
-  activeKey=null; refreshAll(); scheduleSave(); toast('Imported '+name);
+  fileHandle=null; activeKey=null; refreshAll(); scheduleSave(); toast('Imported '+name);
 }
 $('openFile').addEventListener('change',async function(e){
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
@@ -2334,7 +2408,7 @@ async function clearScript(){
   if(!confirm('Start a new project? This clears the current script, A/V segments and all breakdown data on this device. Save a file first if you need it.')) return;
   state=carryUi(defaultState(false));
   loadDoc([{t:'scene-heading',x:''}]);
-  scriptTitle.value='UNTITLED SCREENPLAY'; activeKey=null;
+  scriptTitle.value='UNTITLED SCREENPLAY'; activeKey=null; fileHandle=null;
   await storageDelete(STORAGE_KEY); refreshAll(); setStatus('','Saved');
 }
 
@@ -2353,6 +2427,9 @@ const ACT={
   fountain:exportFountain,
   print:function(){window.print();},
   fdx:exportFdx,
+  saveAs:saveAs,
+  splitParas:splitParas,
+  togEnterCycle:function(){state.ui.enterCycle=state.ui.enterCycle===false;updateMenuInfo();scheduleSave();toast('Enter on an empty line: '+(state.ui.enterCycle?'changes its type':'adds a new line'));},
   pdfOutline:exportOutlinePDF,
   pdfShots:exportShotListPDF,
   pdfDood:exportDoodPDF,
@@ -2550,6 +2627,10 @@ $('typeSelect').addEventListener('change',function(e){restoreSel();setElementTyp
 scriptTitle.addEventListener('input',scheduleSave);
 document.addEventListener('keydown',function(e){
   const mod=e.ctrlKey||e.metaKey, k=(e.key||'').toLowerCase();
+  if(e.altKey&&!e.ctrlKey&&!e.metaKey&&currentTab==='write'&&state.mode==='screenplay'&&document.activeElement===editor){
+    const alt={KeyS:'scene-heading',KeyA:'action',KeyC:'character',KeyP:'parenthetical',KeyD:'dialogue',KeyT:'transition',KeyB:'act'}[e.code];
+    if(alt){e.preventDefault();setElementType(alt);return;}
+  }
   if(mod&&k==='s'){e.preventDefault();saveProjectFile();return;}
   if(mod&&(k==='f'||k==='h')&&currentTab==='write'){e.preventDefault();openFind();return;}
   if(mod&&(k==='z'||k==='y')){
@@ -2650,7 +2731,7 @@ function pasteFromClipboard(){
     if(state.mode==='av'){const ta=lastAvTa;if(ta&&document.body.contains(ta)){ta.focus();ta.setRangeText(t,ta.selectionStart,ta.selectionEnd,'end');ta.dispatchEvent(new Event('input',{bubbles:true}));}return;}
     restoreSel();
     if(t.indexOf('\n')<0) document.execCommand('insertText',false,t);
-    else{insertElementsAfterCurrent(parseFountain(t).doc);invalidate();scheduleSave();}
+    else{insertElementsAfterCurrent(parsePlainScript(t).doc);invalidate();scheduleSave();}
   }).catch(fail);
 }
 function openAnalytics(){
