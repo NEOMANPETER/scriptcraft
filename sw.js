@@ -2,7 +2,7 @@
 // Everything the app needs (including PDF export, which is built into index.html)
 // is cached on the first visit. Your scripts live in the browser's own storage,
 // not in this cache.
-const CACHE = 'scriptcraft-v3-4-1';
+const CACHE = 'scriptcraft-v3-5-0';
 const SHELL = [
   './',
   './index.html',

@@ -319,6 +319,27 @@ table.dood td.nm{text-align:left;font-weight:600}
 .dl.add{background:rgba(62,207,142,.2)}
 .dl.del{background:rgba(239,90,90,.2);text-decoration:line-through}
 @media print{.element.pb{border-top:0;margin-top:0;padding-top:0}.element.pb::before,.element.rev-mark::after{display:none}.findbar,.readbar{display:none!important}}
+/* ---------- v3.5 additions ---------- */
+.canvas-scroll{position:relative}
+.element.has-note{box-shadow:-6px 0 0 #f2c230}
+.note-card{position:absolute;width:250px;z-index:60;background:#fff8d6;color:#14161a;border:1px solid #e6c84a;border-radius:8px;padding:.6rem;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:.78rem}
+.note-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
+.note-row{display:flex;justify-content:space-between;gap:.4rem;padding:.3rem 0;border-bottom:1px solid #ecd98a;white-space:pre-wrap;word-break:break-word}
+.note-row small{display:block;color:#7a6a20;font-size:.66rem}
+.note-card textarea{width:100%;min-height:54px;margin:.4rem 0;background:#fffdf0;color:#14161a;border:1px solid #e6c84a}
+.note-card button{background:#fff;color:#14161a;border-color:#d9bf49}
+.note-card button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.screen-footer{width:100%;max-width:800px;text-align:center;font:9pt var(--script-font);color:#8a8f9c;margin-top:.5rem;flex-shrink:0}
+.cover-print,.print-footer{display:none}
+.cover-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.cv-preview{background:#fff;color:#111;border:1px solid var(--border);border-radius:4px;aspect-ratio:8.5/11;padding:6% 8%;display:flex;flex-direction:column;font-family:var(--script-font);font-size:.62rem}
+.cv-title{margin-top:30%;text-align:center;font-weight:700;font-size:.95rem;text-transform:uppercase;word-break:break-word}
+.cv-mid{text-align:center;margin-top:.6rem;line-height:1.5}
+.cv-bottom{margin-top:auto;display:flex;justify-content:space-between;gap:.5rem;font-size:.58rem}
+.cv-copy{text-align:center;font-size:.52rem;margin-top:.4rem}
+@media (max-width:1100px){.note-card{position:fixed;left:.5rem;right:.5rem;bottom:70px;width:auto}}
+@media (max-width:700px){.cover-grid{grid-template-columns:1fr}}
+@media print{.note-card,.screen-footer{display:none!important}.cover-print.show{display:flex!important;flex-direction:column;page-break-after:always;min-height:240mm;font-family:var(--script-font);color:#000;text-align:center;padding-top:25%}.cover-print .cv-title{margin-top:0;font-size:18pt}.cover-print .cv-bottom{margin-top:auto;font-size:11pt;text-align:left}.print-footer.show{display:block;position:fixed;bottom:8mm;left:0;right:0;text-align:center;font:9pt var(--script-font);color:#000}.element.has-note{box-shadow:none}}
 @media (max-width:900px){
   .only-mobile{display:inline-flex}
   .navpane,.inspector{position:absolute;top:0;bottom:0;z-index:30;width:min(88vw,330px);box-shadow:0 0 40px rgba(0,0,0,.5)}
@@ -363,6 +384,7 @@ body.kb nav.tabs{display:none}
           <button data-act="saveFile">Save project <small>Ctrl+S</small></button>
           <button data-act="saveAs">Save as…</button>
           <button data-act="openInfo">Script info… <small>author · company</small></button>
+          <button data-act="openCover">Cover page &amp; footer…</button>
           <button data-act="openVersions">Version history…</button>
           <hr>
           <button data-act="pdfSp">Export PDF — Screenplay <small>offline</small></button>
@@ -396,6 +418,7 @@ body.kb nav.tabs{display:none}
           <button data-act="cmd" data-c="paste">Paste <small>Ctrl+V</small></button>
           <hr>
           <button data-act="openFind">Find &amp; replace… <small>Ctrl+F</small></button>
+          <button data-act="openNote">Add note to this line… <small>Alt+N</small></button>
         </div>
       </div>
 
@@ -539,8 +562,16 @@ body.kb nav.tabs{display:none}
           <div id="backupText"></div>
           <div style="display:flex;gap:.4rem;flex-shrink:0"><button class="primary" data-act="saveFile">Save backup</button><button data-act="snoozeBackup">Later</button></div>
         </div>
+        <div class="cover-print" id="coverPrint"></div>
         <div id="editor" class="page" contenteditable="true" spellcheck="true" aria-label="Screenplay editor"></div>
         <div id="avEditor" class="av-page" style="display:none"></div>
+        <div class="screen-footer" id="screenFooter"></div>
+        <div class="note-card" id="noteCard" hidden>
+          <div class="note-head"><b>Notes on this line</b><button class="icon-btn" data-act="noteClose" aria-label="Close notes">✕</button></div>
+          <div id="noteList"></div>
+          <textarea id="noteInput" maxlength="600" placeholder="Write a note…" aria-label="New note"></textarea>
+          <button class="primary" data-act="noteAdd">Add note</button>
+        </div>
       </div>
     </div>
 
@@ -612,6 +643,7 @@ body.kb nav.tabs{display:none}
 <div class="tagmenu" id="tagMenu" hidden></div>
 <input type="file" id="openFile" accept=".scriptcraft,.json,.fountain,.txt,.fdx,application/json,text/plain,text/xml,application/xml" hidden>
 <input type="file" id="imgPick" accept="image/*" hidden>
+<div class="print-footer" id="printFooter"></div>
 <div class="ac" id="ac" hidden></div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -630,6 +662,31 @@ body.kb nav.tabs{display:none}
   <div class="ver-list" id="verList"></div>
   <div id="verDiff"></div>
   <div class="dlg-actions"><button type="button" class="primary" data-act="closeDlg" data-d="versionsDlg">Close</button></div>
+</dialog>
+
+<dialog id="coverDlg">
+  <h3>Cover page &amp; footer</h3>
+  <p class="dlg-note">The cover page is edited here, separately from the script. It prints as the first page of your PDF and in Print view. Leave the title or author blank to use your script title and Script info.</p>
+  <label class="dlg-note" style="display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="cvOn" data-chg="cover"> Include the cover page in the PDF and in Print view</label>
+  <div class="cover-grid">
+    <div>
+      <div class="row"><div class="field-group"><span class="field-label">Title</span><input type="text" id="cvTitle" data-inp="cover" maxlength="120"></div></div>
+      <div class="row">
+        <div class="field-group"><span class="field-label">Byline</span><input type="text" id="cvBy" data-inp="cover" maxlength="40" placeholder="written by"></div>
+        <div class="field-group"><span class="field-label">Author</span><input type="text" id="cvAuthor" data-inp="cover" maxlength="80"></div>
+      </div>
+      <div class="row"><div class="field-group"><span class="field-label">Based on (optional)</span><input type="text" id="cvBased" data-inp="cover" maxlength="120" placeholder="e.g. a story by …"></div></div>
+      <div class="row"><div class="field-group"><span class="field-label">Contact (bottom left)</span><textarea id="cvContact" data-inp="cover" maxlength="400" rows="3" placeholder="Name, phone, email"></textarea></div></div>
+      <div class="row">
+        <div class="field-group"><span class="field-label">Draft date (bottom right)</span><input type="text" id="cvDate" data-inp="cover" maxlength="40"></div>
+        <div class="field-group"><span class="field-label">Copyright line</span><input type="text" id="cvCopy" data-inp="cover" maxlength="120" placeholder="© 2026 …"></div>
+      </div>
+      <label class="dlg-note" style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem"><input type="checkbox" id="cvFooterOn" data-chg="cover"> Print a footer on every page</label>
+      <div class="row"><div class="field-group"><span class="field-label">Footer text</span><input type="text" id="cvFooter" data-inp="cover" maxlength="100"></div></div>
+    </div>
+    <div><div class="cv-preview" id="cvPreview" aria-label="Cover page preview"></div></div>
+  </div>
+  <div class="dlg-actions"><button type="button" class="primary" data-act="closeDlg" data-d="coverDlg">Done</button></div>
 </dialog>
 
 <dialog id="callSheetDlg">
@@ -691,6 +748,8 @@ body.kb nav.tabs{display:none}
   <h4>More writing tools</h4>
   <ul>
     <li><b>Parentheticals</b> get their brackets automatically. <b>Dual dialogue:</b> put the cursor on the second character's name and use <b>Format ▸ Dual dialogue</b> (or the DUAL key); the two speeches print side by side.</li>
+    <li><b>Margin notes:</b> click in a line and press <kbd>Alt</kbd>+<kbd>N</kbd> (or the NOTE key, or <b>Edit ▸ Add note to this line</b>). Lines with notes get a yellow bar; click the line to see its notes at the side. Notes are private and never printed.</li>
+    <li><b>Cover page &amp; footer:</b> <b>File ▸ Cover page &amp; footer</b> edits the cover page separately from the script. It prints first in the PDF and in Print view. A footer such as "Written by …" can print at the bottom of every page.</li>
     <li><b>Line-type shortcuts:</b> hold <kbd>Alt</kbd> and press <kbd>S</kbd> Scene heading, <kbd>A</kbd> Action, <kbd>C</kbd> Character, <kbd>P</kbd> Parenthetical, <kbd>D</kbd> Dialogue, <kbd>T</kbd> Transition or <kbd>B</kbd> Act break. Just click anywhere in a paragraph; you do not need to select it. Pressing <kbd>Enter</kbd> on an <i>empty</i> line also steps it to the next line type (switch this off in the Format menu).</li>
     <li><b>Pasting from Word:</b> every paragraph becomes its own line and ScriptCraft guesses its type (scene headings, character names, dialogue, transitions). To change a paragraph, click in it and use an Alt shortcut. <b>Format ▸ Split this block into paragraphs</b> separates a block that has several lines.</li>
     <li><b>Find &amp; replace:</b> <kbd>Ctrl</kbd>+<kbd>F</kbd>. <b>Undo / redo:</b> <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> now also undo new lines and type changes.</li>
@@ -908,7 +967,8 @@ function pageMap(doc,opts){
   });
   return {count:pages.length,breaks:breaks};
 }
-function spPageContent(lines,pageNo,revLabel,P){
+
+function spPageContent(lines,pageNo,revLabel,P,footer){
   P=P||PAPER.letter;
   const out=[], y0=P.h-81;
   lines.forEach(function(l,i){
@@ -925,30 +985,45 @@ function spPageContent(lines,pageNo,revLabel,P){
   });
   if(revLabel){ const rl=pdfSafe(revLabel); out.push(tx('F1',9,P.right-rl.length*5.4,P.h-32,rl)); }
   if(pageNo>1){ const t=pageNo+'.'; out.push(tx('F1',12,P.right-t.length*7.2,P.h-48,t)); }
+  if(footer&&String(footer).trim()){ const f=pdfSafe(String(footer).trim()); out.push(tx('F1',9,(P.w-f.length*5.4)/2,36,f)); }
   return out.join('\n');
 }
-function titlePageContent(title,author,revLabel,P){
+
+function titlePageContent(title,author,revLabel,P,cover){
   P=P||PAPER.letter;
-  const ops=[]; var y=P.h-322;
-  wrapText(pdfSafe(String(title||'UNTITLED').toUpperCase()),34).forEach(function(s){
+  const c=cover||null, ops=[]; var y=P.h-322;
+  const ttl=c?c.title:title, auth=c?c.author:author, by=c?(c.by||'written by'):'written by';
+  wrapText(pdfSafe(String(ttl||'UNTITLED').toUpperCase()),34).forEach(function(s){
     ops.push(tx('F2',16,(P.w-s.length*9.6)/2,y,s)); y-=22;
   });
-  if(author&&String(author).trim()){
+  if(auth&&String(auth).trim()){
     y-=24;
-    ops.push(tx('F1',12,(P.w-10*7.2)/2,y,'written by')); y-=20;
-    wrapText(pdfSafe(String(author).trim()),40).forEach(function(s){
+    const bs=pdfSafe(by);
+    ops.push(tx('F1',12,(P.w-bs.length*7.2)/2,y,bs)); y-=20;
+    wrapText(pdfSafe(String(auth).trim()),40).forEach(function(s){
       ops.push(tx('F1',12,(P.w-s.length*7.2)/2,y,s)); y-=16;
     });
   }
+  if(c&&c.based&&String(c.based).trim()){
+    y-=24;
+    wrapText(pdfSafe(String(c.based).trim()),40).forEach(function(s){ ops.push(tx('F1',12,(P.w-s.length*7.2)/2,y,s)); y-=16; });
+  }
   if(revLabel){ y-=30; const rl=pdfSafe(revLabel); ops.push(tx('F1',10,(P.w-rl.length*6)/2,y,rl)); }
+  if(c){
+    if(c.contact&&String(c.contact).trim()){ wrapText(pdfSafe(String(c.contact).trim()),38).slice(0,8).forEach(function(s,i){ ops.push(tx('F1',11,108,150-i*12,s)); }); }
+    if(c.date&&String(c.date).trim()){ const d=pdfSafe(String(c.date).trim()); ops.push(tx('F1',11,P.right-d.length*6.6,150,d)); }
+    if(c.copyright&&String(c.copyright).trim()){ const cc=pdfSafe(String(c.copyright).trim()); ops.push(tx('F1',9,(P.w-cc.length*5.4)/2,90,cc)); }
+  }
   return ops.join('\n');
 }
+
 function layoutScreenplay(doc,title,author,opts){
   opts=opts||{};
   const P=paperOf(opts), rl=opts.revLabel||'';
   const pages=paginate(spUnits(doc,opts),P.lines,opts);
-  const out=[titlePageContent(title,author,rl,P)];
-  pages.forEach(function(p,i){out.push(spPageContent(p,i+1,rl,P));});
+  const out=[];
+  if(opts.coverOn!==false) out.push(titlePageContent(title,author,rl,P,opts.cover||null));
+  pages.forEach(function(p,i){out.push(spPageContent(p,i+1,rl,P,opts.footer||''));});
   out.paper=P;
   return out;
 }
@@ -1003,7 +1078,8 @@ function layoutAV(segs,title,author,opts){
     cur.y+=6;
   });
   if(!cur) newPage(true);
-  const out=pages.map(function(p,i){return p.ops.join('\n')+'\n'+tx('F1',9,PW/2-3,30,String(i+1));});
+  const ft=(opts&&opts.footer&&String(opts.footer).trim())?pdfSafe(String(opts.footer).trim()):'';
+  const out=pages.map(function(p,i){return p.ops.join('\n')+'\n'+tx('F1',9,PW/2-3,30,String(i+1))+(ft?'\n'+tx('F1',9,(PW-ft.length*5.4)/2,42,ft):'');});
   out.paper=P;
   return out;
 }
@@ -1415,7 +1491,7 @@ function safeName(s){return (String(s||'').replace(/[^\w\- ]+/g,'').trim().slice
 const $=function(id){return document.getElementById(id);};
 const editor=$('editor'), avRoot=$('avEditor'), scriptTitle=$('scriptTitle');
 const STORAGE_KEY='screenplay:main';
-const APP_VERSION='3.4.1';
+const APP_VERSION='3.5.0';
 // To receive feedback directly, add your WhatsApp number (country code, digits only, e.g. '2348012345678') and/or an email.
 // Until then the "Send feedback" button copies a short technical report (no script content) for the tester to paste to you.
 const FEEDBACK={whatsapp:'',email:''};
@@ -1494,7 +1570,8 @@ function emptySeg(){return {id:uid(),title:'Segment 1',rows:[{id:uid(),v:'',a:''
 
 function defaultState(sample){
   return {theme:'light',mode:'screenplay',author:'',company:'',rev:'white',revBase:null,callSheet:{callTime:'',location:'',weather:'',hospital:''},
-          schedule:{},storyboard:{},characters:{},propsMeta:{},assets:[],checks:{},synopsis:{},av:{segments:[]},lastBackup:'',
+          schedule:{},storyboard:{},characters:{},propsMeta:{},assets:[],checks:{},synopsis:{},notes:{},av:{segments:[]},lastBackup:'',
+          cover:{on:true,title:'',by:'',author:'',based:'',contact:'',date:'',copyright:'',footerOn:true,footer:''},
           ui:{tipSeen:false,snooze:0,sceneNums:true,contd:true,themeSet:false,paper:'a4',pageBreaks:true,enterCycle:true}};
 }
 function carryUi(st){
@@ -1523,6 +1600,17 @@ function mergeState(s){
   if(b.rev!=='white'&&s.revBase&&typeof s.revBase==='object'&&!Array.isArray(s.revBase)) b.revBase=s.revBase;
   if(s.callSheet&&typeof s.callSheet==='object'){['callTime','location','weather','hospital'].forEach(function(k){if(typeof s.callSheet[k]==='string') b.callSheet[k]=s.callSheet[k].slice(0,160);});}
   ['schedule','storyboard','characters','propsMeta','checks','synopsis'].forEach(function(k){if(s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k])) b[k]=s[k];});
+  if(s.cover&&typeof s.cover==='object'){
+    const c=s.cover;
+    ['title','by','author','based','contact','date','copyright','footer'].forEach(function(k){if(typeof c[k]==='string') b.cover[k]=c[k].slice(0,k==='contact'?400:120);});
+    b.cover.on=c.on!==false; b.cover.footerOn=c.footerOn!==false;
+  }
+  if(s.notes&&typeof s.notes==='object'&&!Array.isArray(s.notes)){
+    Object.keys(s.notes).forEach(function(k){
+      if(!/^[A-Za-z0-9]{3,24}$/.test(k)||!Array.isArray(s.notes[k])) return;
+      b.notes[k]=s.notes[k].filter(function(n){return n&&typeof n.text==='string';}).slice(-20).map(function(n){return {id:String(n.id||uid()).slice(0,20),text:n.text.slice(0,600),d:typeof n.d==='string'?n.d.slice(0,40):new Date().toISOString()};});
+    });
+  }
   if(Array.isArray(s.assets)) b.assets=s.assets.filter(function(a){return a&&typeof a==='object';}).map(cleanAsset);
   if(s.av&&Array.isArray(s.av.segments)) b.av.segments=s.av.segments.filter(function(x){return x&&typeof x==='object';}).map(cleanSeg);
   if(s.ui&&typeof s.ui==='object'){
@@ -1795,6 +1883,7 @@ document.addEventListener('selectionchange',function(){
     lastRange=sel.getRangeAt(0).cloneRange();
     updateToolbarActiveState();
     const el=getCurrentElement(); if(el) setActive(sceneKeyForElement(el));
+    noteFollow(el);
   }
 });
 function keyOfSceneHeading(h){
@@ -2045,7 +2134,7 @@ const KEYACT={
   audio:function(){const ta=rowTextarea('rowA');if(ta) ta.focus();else toast('Add a row first');},
   tag:openTagMenu,
   dual:function(){ACT.toggleDual();},
-  note:function(){applyTag('note');}
+  note:function(){if(state.mode==='av') applyTag('note'); else openNoteForCurrent();}
 };
 function activeSegId(){if(activeKey&&activeKey.indexOf('AV::')===0&&segById(activeKey.slice(4))) return activeKey.slice(4);const l=state.av.segments[state.av.segments.length-1];return l?l.id:null;}
 function rowTextarea(kind){
@@ -2130,7 +2219,7 @@ function updateMenuInfo(){
   $('ecState').textContent=state.ui.enterCycle!==false?'on':'off';
   $('menuNote').textContent='Last backup: '+agoText(lastBackupMs())+' · v'+APP_VERSION;
 }
-function refreshChrome(){renderNav();renderInspector();updateStats();checkBackupNag();markRevisions();refreshPageBreaks();editor.setAttribute('data-blank',(editor.children.length===1&&elText(editor.firstElementChild).trim()==='')?'1':'0');}
+function refreshChrome(){renderNav();renderInspector();updateStats();checkBackupNag();markRevisions();markNotes();refreshPageBreaks();$('screenFooter').textContent=footerText();editor.setAttribute('data-blank',(editor.children.length===1&&elText(editor.firstElementChild).trim()==='')?'1':'0');}
 
 /* ================= inspector ================= */
 function sceneAssets(d,key,cats){
@@ -2311,7 +2400,7 @@ function renderGear(){
 
 /* ================= exports & files ================= */
 
-function pdfOpts(){return {paper:state.ui.paper,sceneNums:state.ui.sceneNums!==false,contd:state.ui.contd!==false,revLabel:revLabelText()};}
+function pdfOpts(){return {paper:state.ui.paper,sceneNums:state.ui.sceneNums!==false,contd:state.ui.contd!==false,revLabel:revLabelText(),cover:coverResolved(),coverOn:state.cover.on!==false,footer:footerText()};}
 function exportPDF(which){
   const mode=which||state.mode;
   try{
@@ -2425,9 +2514,14 @@ const ACT={
   pdfSp:function(){exportPDF('screenplay');},
   pdfAv:function(){exportPDF('av');},
   fountain:exportFountain,
-  print:function(){window.print();},
+  print:function(){fillCoverPrint();window.print();},
   fdx:exportFdx,
   saveAs:saveAs,
+  openNote:openNoteForCurrent,
+  noteAdd:addNote,
+  noteClose:hideNoteCard,
+  noteDel:function(b){delNote(b.dataset.n);},
+  openCover:openCover,
   splitParas:splitParas,
   togEnterCycle:function(){state.ui.enterCycle=state.ui.enterCycle===false;updateMenuInfo();scheduleSave();toast('Enter on an empty line: '+(state.ui.enterCycle?'changes its type':'adds a new line'));},
   pdfOutline:exportOutlinePDF,
@@ -2590,6 +2684,7 @@ const ACT={
 };
 function moveIn(arr,pred,dir){const i=arr.findIndex(pred);const j=i+dir;if(i<0||j<0||j>=arr.length) return;const t=arr[i];arr[i]=arr[j];arr[j]=t;}
 const CHG={
+  cover:function(t){readCover();renderCoverPreview();scheduleSave();refreshChrome();},
   schDay:function(t){schedFor(t.dataset.k).day=num(t.value);scheduleSave();renderSchedule();},
   schStatus:function(t){schedFor(t.dataset.k).status=t.value==='shot'?'shot':'planned';scheduleSave();renderSchedule();},
   propCat:function(t){const k=t.dataset.k;if(!state.propsMeta[k]) state.propsMeta[k]={};state.propsMeta[k].category=CORE.indexOf(t.value)>=0?t.value:'prop';state.propsMeta[k].manual=true;scheduleSave();renderPropsSets();},
@@ -2611,6 +2706,7 @@ const INP={
   sbDesc:function(t){const p=panelsOf(t.dataset.k)[+t.dataset.i];if(p){p.desc=t.value;scheduleSave();}},
   sbF:function(t){const p=panelsOf(t.dataset.k)[+t.dataset.i],f=t.dataset.f;if(p&&(f==='shot'||f==='move'||f==='lens')){p[f]=t.value.slice(0,40);scheduleSave();}},
   synopsis:function(t){state.synopsis[t.dataset.k]=t.value.slice(0,600);scheduleSave();},
+  cover:function(t){readCover();renderCoverPreview();scheduleSave();},
   charF:function(t){const n=t.dataset.n;if(!state.characters[n]||typeof state.characters[n]!=='object') state.characters[n]={};state.characters[n][t.dataset.f]=t.value;scheduleSave();if(t.dataset.f==='costume') invalidate();}
 };
 document.addEventListener('click',function(e){
@@ -2628,6 +2724,7 @@ scriptTitle.addEventListener('input',scheduleSave);
 document.addEventListener('keydown',function(e){
   const mod=e.ctrlKey||e.metaKey, k=(e.key||'').toLowerCase();
   if(e.altKey&&!e.ctrlKey&&!e.metaKey&&currentTab==='write'&&state.mode==='screenplay'&&document.activeElement===editor){
+    if(e.code==='KeyN'){e.preventDefault();openNoteForCurrent();return;}
     const alt={KeyS:'scene-heading',KeyA:'action',KeyC:'character',KeyP:'parenthetical',KeyD:'dialogue',KeyT:'transition',KeyB:'act'}[e.code];
     if(alt){e.preventDefault();setElementType(alt);return;}
   }
@@ -2637,7 +2734,7 @@ document.addEventListener('keydown',function(e){
     const ae=document.activeElement;
     if(ae===editor||avRoot.contains(ae)){e.preventDefault();if(k==='y'||e.shiftKey) redo(); else undo(); return;}
   }
-  if(e.key==='Escape'){closeMenus();$('tagMenu').hidden=true;closeFind();}
+  if(e.key==='Escape'){closeMenus();$('tagMenu').hidden=true;closeFind();hideNoteCard();}
 });
 if(window.visualViewport){
   const fit=function(){
@@ -3077,6 +3174,91 @@ function exportFdx(){
   download(new Blob([toFdx(serializeDoc(),scriptTitle.value,state.author)],{type:'application/xml'}),safeName(scriptTitle.value)+'.fdx');
   toast('Final Draft file saved');
 }
+
+/* ================= margin notes ================= */
+const ncState={id:null,forced:false};
+function lineNotes(id){const a=state.notes[id];return Array.isArray(a)?a:[];}
+function markNotes(){editor.querySelectorAll('.element').forEach(function(el){el.classList.toggle('has-note',lineNotes(el.getAttribute('data-id')).length>0);});}
+function hideNoteCard(){ncState.id=null;ncState.forced=false;$('noteCard').hidden=true;}
+function renderNoteCard(){
+  const list=lineNotes(ncState.id);
+  $('noteList').innerHTML=list.length?list.map(function(n){return '<div class="note-row"><div>'+esc(n.text)+'<small>'+esc(new Date(n.d).toLocaleDateString('en-GB'))+'</small></div><button class="icon-btn" data-act="noteDel" data-n="'+esc(n.id)+'" aria-label="Delete note">✕</button></div>';}).join(''):'<div class="insp-empty" style="color:#7a6a20">No notes on this line yet.</div>';
+}
+function placeNoteCard(el){
+  const card=$('noteCard'), box=$('canvasScroll');
+  if(window.innerWidth>1100){
+    const r=el.getBoundingClientRect(), b=box.getBoundingClientRect(), pg=editor.getBoundingClientRect();
+    card.style.top=Math.max(0,r.top-b.top+box.scrollTop)+'px';
+    card.style.left=(pg.right-b.left+box.scrollLeft+12)+'px';
+  }else{card.style.top='';card.style.left='';}
+}
+function showNoteCard(el,forced){
+  const id=el.getAttribute('data-id'); if(!id) return;
+  ncState.id=id; if(forced) ncState.forced=true;
+  renderNoteCard(); $('noteCard').hidden=false; placeNoteCard(el);
+  if(forced) $('noteInput').focus();
+}
+function noteFollow(el){
+  if(!el){return;}
+  const id=el.getAttribute('data-id');
+  if(lineNotes(id).length>0||(ncState.forced&&ncState.id===id)) showNoteCard(el,false); else hideNoteCard();
+}
+function openNoteForCurrent(){
+  if(state.mode!=='screenplay'){toast('Margin notes work in Screenplay view. In A/V view, type [note: …] in a cell.');return;}
+  restoreSel();
+  const el=getCurrentElement(); if(!el){toast('Click in the line you want to add a note to');return;}
+  showNoteCard(el,true);
+}
+function addNote(){
+  const id=ncState.id, txt=($('noteInput').value||'').trim(); if(!id||!txt) return;
+  state.notes[id]=lineNotes(id).concat([{id:uid(),text:txt.slice(0,600),d:new Date().toISOString()}]).slice(-20);
+  $('noteInput').value=''; renderNoteCard(); markNotes(); scheduleSave(); toast('Note added');
+}
+function delNote(nid){
+  const id=ncState.id; if(!id) return;
+  const left=lineNotes(id).filter(function(n){return n.id!==nid;});
+  if(left.length) state.notes[id]=left; else delete state.notes[id];
+  renderNoteCard(); markNotes(); scheduleSave();
+}
+
+/* ================= cover page + footer ================= */
+function coverResolved(){
+  const c=state.cover;
+  return {title:c.title||scriptTitle.value||'Untitled',by:c.by||'written by',author:c.author||state.author||'',based:c.based||'',contact:c.contact||'',date:c.date||'',copyright:c.copyright||''};
+}
+function footerText(){
+  const c=state.cover; if(c.footerOn===false) return '';
+  return (c.footer&&c.footer.trim())||(state.author?('Written by '+state.author):'');
+}
+function coverHtml(){
+  const r=coverResolved(), br=function(s){return esc(s).replace(/\n/g,'<br>');};
+  return '<div class="cv-title">'+esc(r.title)+'</div><div class="cv-mid">'+(r.author?esc(r.by)+'<br>'+esc(r.author):'')+(r.based?'<br><br>'+esc(r.based):'')+'</div>'
+    +'<div class="cv-bottom"><div>'+br(r.contact)+'</div><div>'+esc(r.date)+'</div></div>'+(r.copyright?'<div class="cv-copy">'+esc(r.copyright)+'</div>':'');
+}
+function renderCoverPreview(){$('cvPreview').innerHTML=coverHtml();}
+function openCover(){
+  const c=state.cover;
+  $('cvOn').checked=c.on!==false; $('cvTitle').value=c.title||''; $('cvBy').value=c.by||''; $('cvAuthor').value=c.author||''; $('cvBased').value=c.based||'';
+  $('cvContact').value=c.contact||''; $('cvDate').value=c.date||''; $('cvCopy').value=c.copyright||''; $('cvFooterOn').checked=c.footerOn!==false; $('cvFooter').value=c.footer||'';
+  $('cvTitle').placeholder=scriptTitle.value||'Title'; $('cvAuthor').placeholder=state.author||'Author (from Script info)';
+  $('cvFooter').placeholder=state.author?('Written by '+state.author):'Written by …';
+  renderCoverPreview(); $('coverDlg').showModal();
+}
+function readCover(){
+  const c=state.cover;
+  c.on=$('cvOn').checked; c.title=($('cvTitle').value||'').slice(0,120); c.by=($('cvBy').value||'').slice(0,40); c.author=($('cvAuthor').value||'').slice(0,80); c.based=($('cvBased').value||'').slice(0,120);
+  c.contact=($('cvContact').value||'').slice(0,400); c.date=($('cvDate').value||'').slice(0,40); c.copyright=($('cvCopy').value||'').slice(0,120);
+  c.footerOn=$('cvFooterOn').checked; c.footer=($('cvFooter').value||'').slice(0,100);
+}
+function fillCoverPrint(){
+  const cp=$('coverPrint'), pf=$('printFooter');
+  const show=state.cover.on!==false&&currentTab==='write'&&state.mode==='screenplay';
+  cp.classList.toggle('show',show); if(show) cp.innerHTML=coverHtml();
+  const ft=currentTab==='write'?footerText():''; pf.textContent=ft; pf.classList.toggle('show',!!ft);
+}
+function clearCoverPrint(){$('coverPrint').classList.remove('show');$('printFooter').classList.remove('show');}
+window.addEventListener('beforeprint',fillCoverPrint);
+window.addEventListener('afterprint',clearCoverPrint);
 
 /* ================= boot ================= */
 async function loadScript(){
