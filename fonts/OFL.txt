@@ -1,0 +1,5 @@
+Courier Prime
+Copyright 2013 The Courier Prime Project Authors (https://github.com/quoteunquoteapps/CourierPrime)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+The license is available at https://openfontlicense.org
