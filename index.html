@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" href="favicon.svg">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ScriptCraft — Screenwriting & Production Suite</title>
@@ -12,6 +11,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ScriptCraft">
 <meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
 
 <style>
 @font-face{font-family:'Courier Prime';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/CourierPrime-Regular.ttf') format('truetype')}
@@ -55,7 +57,7 @@ input[type=text],input[type=number],select,textarea{background:var(--panel-2);bo
 .desktop-header{background:var(--panel);border-bottom:1px solid var(--border);display:flex;flex-direction:column;z-index:40;flex-shrink:0;order:0}
 .menubar{display:flex;align-items:center;justify-content:space-between;gap:.3rem .8rem;flex-wrap:wrap;padding:.35rem .8rem;padding-top:calc(.35rem + env(safe-area-inset-top));border-bottom:1px solid var(--border);font-size:.78rem}
 .menubar-items{display:flex;gap:.15rem;align-items:center;overflow-x:auto;max-width:100%}
-.brand-mark{width:26px;height:26px;border-radius:7px;display:block;margin-right:.5rem;flex-shrink:0}
+.brand-mark{width:32px;height:32px;border-radius:8px;display:block;margin-right:.5rem;flex-shrink:0;object-fit:cover}
 .menu-dropdown-wrap{position:relative}
 .menubar-btn{background:transparent;border:0;color:var(--text-main);padding:.28rem .55rem;border-radius:5px;font-size:.78rem;font-weight:500;cursor:pointer;white-space:nowrap}
 .menubar-btn:hover,.menubar-btn[aria-expanded="true"]{background:var(--accent-soft);color:var(--accent-text)}
@@ -139,7 +141,7 @@ nav.tabs button.tab.active{background:var(--accent);color:var(--accent-ink);bord
   radial-gradient(ellipse at top,var(--accent-soft),transparent 42%),var(--ink)}
 .tip{width:100%;max-width:8.5in;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:.6rem .8rem;font-size:.78rem;margin-bottom:1rem;display:flex;gap:.8rem;align-items:flex-start;justify-content:space-between}
 .sheet-slot{width:100%;display:flex;justify-content:center;flex-shrink:0}
-.page{background:#fff;color:#14161a;width:8.5in;min-height:11in;padding:1in 1in 1in 1.5in;box-shadow:0 1px 0 rgba(255,255,255,.65) inset,0 16px 44px rgba(0,0,0,.28);border-radius:2px;font-family:var(--script-font);font-size:12pt;line-height:1;outline:none;flex-shrink:0;position:relative}
+.page{background:#fff;color:#000;width:8.5in;min-height:11in;padding:1in 1in 1in 1.5in;box-shadow:0 1px 0 rgba(255,255,255,.65) inset,0 16px 44px rgba(0,0,0,.28);border-radius:2px;font-family:var(--script-font);font-size:12pt;line-height:1;letter-spacing:0;font-synthesis:none;font-weight:400;outline:none;flex-shrink:0;position:relative}
 .page[data-paper="a4"]{width:210mm;min-height:297mm;padding:1in 1.07in 1in 1.5in}
 .element{margin:0;padding:0;min-height:1em;outline:none;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;border-radius:2px;position:relative}
 .element + .element{margin-top:1em}
@@ -150,16 +152,16 @@ nav.tabs button.tab.active{background:var(--accent);color:var(--accent-ink);bord
 .element.parenthetical + .element.dialogue,
 .element.parenthetical + .element.parenthetical,
 .element.dialogue + .element.parenthetical{margin-top:0}
-.scene-heading{text-transform:uppercase;font-weight:700}
-.character{text-transform:uppercase;margin-left:2.2in;width:3.8in}
-.parenthetical{margin-left:1.6in;width:2.4in}
-.dialogue{margin-left:1in;width:3.5in}
-.transition{text-transform:uppercase;text-align:right;width:100%;margin-left:0}
+.scene-heading{text-transform:uppercase;font-weight:400}
+.character{text-transform:uppercase;margin-left:2.2in;width:3.8in;font-weight:400}
+.parenthetical{margin-left:1.6in;width:2in;font-weight:400}
+.dialogue{margin-left:1in;width:3.5in;font-weight:400}
+.transition{text-transform:uppercase;text-align:right;width:100%;margin-left:0;font-weight:400}
 .transition.fade-in{text-align:left}
-.act{text-transform:uppercase;text-align:center;font-weight:700;letter-spacing:.08em}
+.act{text-transform:uppercase;text-align:center;font-weight:400;letter-spacing:.08em}
 .scene-heading[data-num]::before,.scene-heading[data-num]::after{content:attr(data-num);position:absolute;top:0;font-weight:400;font-family:var(--script-font)}
-.scene-heading[data-num]::before{left:-0.62in}
-.scene-heading[data-num]::after{right:-0.72in}
+.scene-heading[data-num]::before{left:-0.75in}
+.scene-heading[data-num]::after{right:-0.5in}
 .paper-badge{font-size:.68rem;color:var(--text-dim);border:1px solid var(--border);border-radius:99px;padding:.12rem .5rem;white-space:nowrap}
 
 /* two-column A/V document */
@@ -285,8 +287,11 @@ dialog kbd{background:var(--panel-2);border:1px solid var(--border);border-radiu
 .findbar input[type=text]{width:150px}
 .findbar label{font-size:.72rem;color:var(--text-dim);display:flex;align-items:center;gap:.25rem}
 .findbar .fc{font-size:.72rem;color:var(--text-dim);min-width:4.5rem}
-.element.pb{border-top:1px dashed #c5cad6;margin-top:1.7em;padding-top:.85em}
-.element.pb.scene-heading{margin-top:1.7em}
+.element.pb{border-top:0;margin-top:0.85in;padding-top:1in}
+.element.pb.scene-heading{margin-top:0.85in}
+.pg-cut{position:absolute;left:-1.5in;right:-1in;top:-0.48in;height:0.42in;background:#d5d8e0;box-shadow:0 -14px 18px rgba(0,0,0,.16);pointer-events:none;user-select:none}
+.page[data-paper="a4"] .pg-cut{right:-1.07in}
+.pg-label{position:absolute;top:0.5in;right:0;font-weight:400;font-family:var(--script-font);pointer-events:none;user-select:none}
 .element.rev-mark::after{content:' *';color:#c2410c;font-weight:700}
 .element.character[data-dual="1"]{border-left:3px solid var(--accent);padding-left:.5rem;background:rgba(255,159,10,.09)}
 .element.reading{background:rgba(255,159,10,.3)}
@@ -348,8 +353,13 @@ table.dood td.nm{text-align:left;font-weight:600}
 }
 body.kb nav.tabs{display:none}
 
-@page { size: letter; margin: 1in 1in 1in 1.5in; }
-@page a4sheet { size: A4; margin: 1in 1.07in 1in 1.5in; }
+@page { size: letter; margin: 1in 1in 1in 1.5in;
+  @top-right { content: counter(page) "."; font-family: "Courier Prime", "Courier New", Courier, monospace; font-size: 12pt; font-weight: 400; }
+}
+@page :first { @top-right { content: none; } }
+@page a4sheet { size: A4; margin: 1in 1.07in 1in 1.5in;
+  @top-right { content: counter(page) "."; font-family: "Courier Prime", "Courier New", Courier, monospace; font-size: 12pt; font-weight: 400; }
+}
 @media print{
   .findbar,.readbar,.element.rev-mark::after{display:none!important}
   body{background:#fff!important;color:#000;display:block;height:auto;overflow:visible}
@@ -361,8 +371,9 @@ body.kb nav.tabs{display:none}
   .av-page{box-shadow:none!important;max-width:none!important;min-height:0!important;width:auto!important}
   .element.pb{break-before:page;border-top:0!important;margin-top:0!important;padding-top:0!important}
   .element.pb.scene-heading{margin-top:0!important}
-  .scene-heading[data-num]::before{left:-0.55in}
-  .scene-heading[data-num]::after{right:-0.62in}
+  .pg-cut,.pg-label{display:none!important}
+  .scene-heading[data-num]::before{left:-0.75in}
+  .scene-heading[data-num]::after{right:-0.5in}
 }
 </style>
 </head>
@@ -372,7 +383,7 @@ body.kb nav.tabs{display:none}
   <div class="menubar">
     <div class="menubar-items">
       <button class="icon-btn only-mobile" data-act="togNav" aria-label="Open navigator">☰</button>
-      <svg class="brand-mark" viewBox="0 0 32 32" role="img" aria-label="ScriptCraft"><rect width="32" height="32" rx="7" fill="#FF9F0A"/><path d="M8 10h16M8 16h16M8 22h9" stroke="#1a1204" stroke-width="2" stroke-linecap="round"/></svg>
+      <img class="brand-mark" src="icons/mark-128.png" alt="ScriptCraft">
 
       <div class="menu-dropdown-wrap">
         <button class="menubar-btn" data-act="menu" data-m="fileMenu" aria-haspopup="true">File</button>
@@ -395,7 +406,7 @@ body.kb nav.tabs{display:none}
           <button data-act="fdx">Export Final Draft (.fdx)</button>
           <button data-act="print">Print current view…</button>
           <hr>
-          <button data-act="togSceneNums">Scene numbers in PDF <small id="snState">on</small></button>
+          <button data-act="togSceneNums">Scene numbers <small id="snState">on</small></button>
           <button data-act="togContd">(CONT'D) in PDF <small id="cdState">on</small></button>
           <button data-act="togPaper">Paper size <small id="ppState">A4</small></button>
           <hr>
@@ -786,13 +797,13 @@ function ruleOp(x1,y1,x2,y2,H,g){return 'q '+(g||0.6)+' G 0.5 w '+x1.toFixed(2)+
 
 /* ---------- screenplay layout ---------- */
 const SP={
-  'scene-heading':{ind:0,w:60,before:2,upper:1,bold:1,keep:1},
+  'scene-heading':{ind:0,w:60,before:2,upper:1,keep:1},
   'action':{ind:0,w:60,before:1},
   'character':{ind:22,w:38,before:1,upper:1,keep:1},
   'parenthetical':{ind:16,w:24,before:0,keep:1},
   'dialogue':{ind:10,w:35,before:0},
   'transition':{ind:0,w:60,before:1,upper:1,align:'right'},
-  'act':{ind:0,w:60,before:2,upper:1,bold:1,align:'center'}
+  'act':{ind:0,w:60,before:2,upper:1,align:'center'}
 };
 function cfgFor(t,cols){
   const c=SP[t]||SP.action;
@@ -1656,6 +1667,7 @@ document.addEventListener('visibilitychange',function(){if(document.hidden&&dirt
 function elText(el){
   var out='';
   el.childNodes.forEach(function(n){
+    if(n.nodeType===1 && n.classList && (n.classList.contains('pg-cut')||n.classList.contains('pg-label'))) return;
     if(n.nodeType===3) out+=n.nodeValue; else if(n.nodeName==='BR') out+='\n'; else out+=elText(n);
   });
   return out.replace(/\u200B/g,'').replace(/\n$/,'');
@@ -2690,7 +2702,7 @@ const ACT={
   openCallSheetModal:openCallSheetModal,
   generateCallSheetPDF:generateCallSheetPDF,
   openAnalyticsModal:openAnalytics,
-  togSceneNums:function(){state.ui.sceneNums=state.ui.sceneNums===false;updateMenuInfo();scheduleSave();toast('Scene numbers in PDF: '+(state.ui.sceneNums?'on':'off'));},
+  togSceneNums:function(){state.ui.sceneNums=state.ui.sceneNums===false;stampFormat();updateMenuInfo();scheduleSave();toast('Scene numbers: '+(state.ui.sceneNums?'on':'off'));},
   togContd:function(){state.ui.contd=state.ui.contd===false;updateMenuInfo();scheduleSave();toast("(CONT'D) in PDF: "+(state.ui.contd?'on':'off'));},
   snoozeBackup:function(){state.ui.snooze=Date.now()+3*864e5;$('backupBox').hidden=true;scheduleSave();toast("OK — I'll remind you in a few days");},
   feedback:function(){
@@ -3149,7 +3161,25 @@ function verById(id){return versionsCache.filter(function(v){return v.id===id;})
 /* ================= live page breaks + revision marks ================= */
 var pageCount=0, pbTimer=null;
 function refreshPageBreaks(){clearTimeout(pbTimer);pbTimer=setTimeout(doPageBreaks,350);}
+function clearPageChrome(){
+  editor.querySelectorAll('.pg-cut,.pg-label').forEach(function(n){n.remove();});
+}
+function paintPageChrome(){
+  clearPageChrome();
+  editor.querySelectorAll('.element.pb').forEach(function(el){
+    const cut=document.createElement('span');
+    cut.className='pg-cut';
+    cut.setAttribute('contenteditable','false');
+    const lab=document.createElement('span');
+    lab.className='pg-label';
+    lab.setAttribute('contenteditable','false');
+    lab.textContent=(el.getAttribute('data-pg')||'')+'.';
+    el.appendChild(cut);
+    el.appendChild(lab);
+  });
+}
 function doPageBreaks(){
+  clearPageChrome();
   editor.querySelectorAll('.pb').forEach(function(e){e.classList.remove('pb','pb-cont');e.removeAttribute('data-pg');});
   if(state.mode!=='screenplay') return;
   const pm=pageMap(serializeDoc(),pdfOpts());
@@ -3157,6 +3187,7 @@ function doPageBreaks(){
   if(state.ui.pageBreaks!==false){
     const els=editor.querySelectorAll('.element');
     pm.breaks.forEach(function(b){const el=els[b.src];if(el){el.classList.add('pb');if(b.cont) el.classList.add('pb-cont');el.setAttribute('data-pg',String(b.page));}});
+    paintPageChrome();
   }
   updateStats();
 }
