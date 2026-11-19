@@ -1,1 +1,29 @@
-
+{
+  "name": "scriptcraft",
+  "version": "3.5.0",
+  "description": "ScriptCraft screenwriting and production suite",
+  "author": "Light Tale Filmz",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac --x64 --arm64"
+  },
+  "build": {
+    "appId": "com.lighttalefilmz.scriptcraft",
+    "productName": "ScriptCraft",
+    "directories": { "output": "dist" },
+    "files": ["**/*", "!.github/**", "!dist/**", "!*.md"],
+    "win": { "target": "nsis", "icon": "icons/icon-512.png" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
+    "mac": {
+      "target": "dmg",
+      "icon": "icons/icon-512.png",
+      "category": "public.app-category.productivity"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  }
+}
